@@ -1,0 +1,17 @@
+- dùng node 20
+- sau khi clone source: 
+    1. npm install
+    2. npm start
+- sử dụng browser route để điều hường url web
+- component dùng để code các component dùng chung ở nhiều nơi
+- folder routers để tạo các route của web
+- utils để viết các function dùng chung
+- call api
+ - dùng async/await gọi đến hàm callApi(url, data, method) *tham khảo ở file src\screens\auth\Login.jsx
+  + ở file src\apis\axiosClient.js const baseURL = `http://dùng-ip-v4:3001`; các bạn thay đổi bằng ipv4 của máy các bạn ví dụ http://192.168.101.1:3001
+  + callApi(url, data, method)
+    1. url: là endpoint để gọi api ví dụ: '/auth/register'
+    2. data: là body để gửi lên api truyền hay không tùy thuộc vào api đó nếu api không cần truyền có thể không truyền
+        thì hàm api ví dụ sẽ là callApi('/hello). Nếu chỉ truyền url thì mặc định data là undefined, và method là GET.
+        Ngược lại nếu call api để khởi tạo hoặc update thì callApi(url, data, method) == callApi('/auth/register, data, 'post')
+    
