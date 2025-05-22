@@ -6,6 +6,7 @@ import BanQuanTriList from "./screens/BanQuanTriList";
 import VanBanList from "./screens/VanBanList";
 import NhiemVu from "./screens/NhiemVu";
 import CuocHop from "./screens/CuocHop";
+import KhieuNai from "./screens/KhieuNai";
 
 function App() {
   return (
@@ -18,6 +19,8 @@ function App() {
             <Route path="/vanban" element={<VanBanList />} />
             <Route path="/nhiemvu" element={<NhiemVu />} />
             <Route path="/cuochop" element={<CuocHop />} />
+            <Route path="/khieunai" element={<KhieuNai />} />
+
             <Route path="*" element={<h2>Chào mừng đến hệ thống 🎉</h2>} />
           </Routes>
         </div>

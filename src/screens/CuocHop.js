@@ -8,13 +8,13 @@ function CuocHop() {
       id: 1,
       title: "Họp Ban Quản Trị",
       datetime: "2025-05-25T09:00",
-      location: "Phòng họp A",
+      location: "Tòa A.1.01",
     },
     {
       id: 2,
       title: "Họp Dự án CNTT",
       datetime: "2025-05-26T14:00",
-      location: "Phòng họp B",
+      location: "Tòa B.1.01",
     },
   ]);
 

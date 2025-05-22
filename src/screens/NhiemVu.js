@@ -120,16 +120,10 @@ const NhiemVu = () => {
     t.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalPages = Math.ceil(filteredTasks.length / PAGE_SIZE);
   const pagedTasks = filteredTasks.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   );
-
-  const handlePageChange = (page) => {
-    if (page < 1 || page > totalPages) return;
-    setCurrentPage(page);
-  };
 
   return (
     <div style={{ maxWidth: 900, margin: "auto" }}>
@@ -152,7 +146,7 @@ const NhiemVu = () => {
         cellSpacing="0"
         style={{ width: "100%", marginBottom: 20, borderCollapse: "collapse" }}
       >
-        <thead style={{ backgroundColor: "#f0f0f0", color: "white" }}>
+        <thead style={{ backgroundColor: "#f0f0f0" }}>
           <tr>
             <th>ID</th>
             <th>Tiêu đề nhiệm vụ</th>
