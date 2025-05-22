@@ -3,15 +3,15 @@ import React, { useState } from "react";
 const initialData = [
   {
     id: 1,
-    name: "Bùi Thạch Đức",
+    name: "Nguyễn Văn A",
     role: "Trưởng Ban",
-    email: "thachducbui@gmail.com",
+    email: "A@example.com",
   },
   {
     id: 2,
-    name: "Nguyễn Phương Nam",
+    name: "Trần Thị B",
     role: "Thành viên",
-    email: "namnguyenphuong@gmail.com",
+    email: "B@example.com",
   },
 ];
 

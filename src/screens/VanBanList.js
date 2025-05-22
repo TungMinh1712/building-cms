@@ -64,7 +64,6 @@ const VanBanList = () => {
       d.type.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalPages = Math.ceil(filteredDocs.length / PAGE_SIZE);
   const pagedDocs = filteredDocs.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
@@ -117,11 +116,6 @@ const VanBanList = () => {
     if (window.confirm("Bạn có chắc muốn xóa văn bản này?")) {
       setDocuments(documents.filter((d) => d.id !== id));
     }
-  };
-
-  const handlePageChange = (page) => {
-    if (page < 1 || page > totalPages) return;
-    setCurrentPage(page);
   };
 
   const handleFileChange = (e) => {

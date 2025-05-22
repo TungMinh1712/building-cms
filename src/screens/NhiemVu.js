@@ -13,7 +13,7 @@ const initialTasks = [
     id: 2,
     title: "Họp Ban quản trị",
     status: "Đã hoàn thành",
-    assignee: "Bùi Thạch Đức",
+    assignee: "Trần Thị B",
     deadline: "2025-05-15",
   },
   {
