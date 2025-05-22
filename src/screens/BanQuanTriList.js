@@ -1,22 +1,32 @@
 import React, { useState } from "react";
 
 const initialData = [
-  { id: 1, name: "Nguyễn Văn A", role: "Trưởng Ban", email: "a@example.com" },
-  { id: 2, name: "Trần Thị B", role: "Thành viên", email: "b@example.com" },
+  {
+    id: 1,
+    name: "Bùi Thạch Đức",
+    role: "Trưởng Ban",
+    email: "thachducbui@gmail.com",
+  },
+  {
+    id: 2,
+    name: "Nguyễn Phương Nam",
+    role: "Thành viên",
+    email: "namnguyenphuong@gmail.com",
+  },
 ];
 
 const BanQuanTriList = () => {
   const [data, setData] = useState(initialData);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ name: "", role: "", email: "" });
+  const [search, setSearch] = useState("");
+  const [sortAsc, setSortAsc] = useState(true);
 
-  // Xử lý mở form sửa
   const handleEdit = (item) => {
     setEditingId(item.id);
     setForm({ name: item.name, role: item.role, email: item.email });
   };
 
-  // Xử lý lưu sửa
   const handleSave = () => {
     setData(
       data.map((item) => (item.id === editingId ? { ...item, ...form } : item))
@@ -25,14 +35,12 @@ const BanQuanTriList = () => {
     setForm({ name: "", role: "", email: "" });
   };
 
-  // Xử lý xóa
   const handleDelete = (id) => {
     if (window.confirm("Bạn có chắc muốn xóa?")) {
       setData(data.filter((item) => item.id !== id));
     }
   };
 
-  // Xử lý thêm mới
   const handleAdd = () => {
     if (!form.name || !form.role || !form.email) {
       alert("Vui lòng nhập đủ thông tin!");
@@ -43,9 +51,34 @@ const BanQuanTriList = () => {
     setForm({ name: "", role: "", email: "" });
   };
 
+  const handleSort = () => {
+    const sorted = [...data].sort((a, b) =>
+      sortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+    );
+    setData(sorted);
+    setSortAsc(!sortAsc);
+  };
+
+  const filteredData = data.filter(
+    (item) =>
+      item.name.toLowerCase().includes(search.toLowerCase()) ||
+      item.email.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div>
       <h2>Danh sách Ban Quản Trị</h2>
+
+      <div style={{ marginBottom: 10, display: "flex", gap: 10 }}>
+        <input
+          type="text"
+          placeholder="🔍 Tìm theo tên hoặc email..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ flex: 1 }}
+        />
+        <button onClick={handleSort}>{sortAsc ? "🔼 A-Z" : "🔽 Z-A"}</button>
+      </div>
 
       <table
         border="1"
@@ -54,7 +87,7 @@ const BanQuanTriList = () => {
         style={{ width: "100%", marginBottom: 20 }}
       >
         <thead>
-          <tr style={{ backgroundColor: "#0d6efd", color: "white" }}>
+          <tr style={{ backgroundColor: "#f0f0f0" }}>
             <th>ID</th>
             <th>Họ và tên</th>
             <th>Vai trò</th>
@@ -63,8 +96,15 @@ const BanQuanTriList = () => {
           </tr>
         </thead>
         <tbody>
-          {data.map((item) => (
-            <tr key={item.id}>
+          {filteredData.map((item) => (
+            <tr
+              key={item.id}
+              style={
+                editingId === item.id
+                  ? { backgroundColor: "#ffeeba" }
+                  : undefined
+              }
+            >
               <td>{item.id}</td>
               <td>
                 {editingId === item.id ? (
@@ -122,6 +162,13 @@ const BanQuanTriList = () => {
               </td>
             </tr>
           ))}
+          {filteredData.length === 0 && (
+            <tr>
+              <td colSpan="5" style={{ textAlign: "center", color: "gray" }}>
+                Không tìm thấy thành viên nào...
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
 

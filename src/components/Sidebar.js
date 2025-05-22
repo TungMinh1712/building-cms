@@ -1,31 +1,30 @@
-// src/components/Sidebar.js
 import React from "react";
-import { Link } from "react-router-dom";
-//import "./Sidebar.css"; // nếu muốn style riêng
+import { NavLink } from "react-router-dom";
+import "./Sidebar.css";
 
 const Sidebar = () => {
+  const menuItems = [
+    { to: "/bqt", label: "Ban Quản Trị", icon: "👥" },
+    { to: "/vanban", label: "Văn Bản", icon: "📄" },
+    { to: "/nhiemvu", label: "Nhiệm Vụ", icon: "📋" },
+    { to: "/cuochop", label: "Cuộc Họp", icon: "☎️" },
+    { to: "/khieunai", label: "Khiếu Nại", icon: "🤬" },
+  ];
+
   return (
-    <div
-      style={{
-        width: "200px",
-        background: "#0d6efd",
-        height: "100vh",
-        color: "white",
-        padding: "1rem",
-      }}
-    >
-      <h3>🏢 Admin</h3>
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        <li>
-          <Link to="/bqt" style={{ color: "white" }}>
-            👥 Ban Quản Trị
-          </Link>
-        </li>
-        <li>
-          <Link to="/vanban" style={{ color: "white" }}>
-            📄 Văn Bản
-          </Link>
-        </li>
+    <div className="sidebar-container">
+      <h3 className="sidebar-title">
+        <span>🏢</span> Admin
+      </h3>
+      <ul className="nav-list">
+        {menuItems.map((item) => (
+          <li key={item.to} className="nav-item">
+            <NavLink to={item.to} className="nav-link" activeClassName="active">
+              <span className="icon">{item.icon}</span>
+              <span>{item.label}</span>
+            </NavLink>
+          </li>
+        ))}
       </ul>
     </div>
   );
