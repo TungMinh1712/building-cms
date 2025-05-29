@@ -9,7 +9,6 @@ const Sidebar = () => {
     { to: "/nhiemvu", label: "Nhiệm Vụ", icon: "📋" },
     { to: "/cuochop", label: "Cuộc Họp", icon: "☎️" },
     { to: "/khieunai", label: "Khiếu Nại", icon: "🤬" },
-    { to: "/caidat", label: "Cài Đặt", icon: "⚙️" },
   ];
 
   return (

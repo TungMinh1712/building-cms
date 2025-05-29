@@ -1,37 +1,44 @@
-// src/screens/CuocHop.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function CuocHop() {
-  // Mảng cuộc họp mẫu (id, tiêu đề, ngày giờ, địa điểm)
-  const [meetings, setMeetings] = useState([
-    {
-      id: 1,
-      title: "Họp Ban Quản Trị",
-      datetime: "2025-05-25T09:00",
-      location: "Tòa A.1.01",
-    },
-    {
-      id: 2,
-      title: "Họp Dự án CNTT",
-      datetime: "2025-05-26T14:00",
-      location: "Tòa B.1.01",
-    },
-  ]);
+  // Load dữ liệu từ localStorage (nếu có)
+  const getSavedMeetings = () => {
+    const saved = localStorage.getItem("meetings");
+    return saved
+      ? JSON.parse(saved)
+      : [
+          {
+            id: 1,
+            title: "Họp Ban Quản Trị",
+            datetime: "2025-05-25T09:00",
+            location: "Tòa A.1.01",
+          },
+          {
+            id: 2,
+            title: "Họp Dự án CNTT",
+            datetime: "2025-05-26T14:00",
+            location: "Tòa B.1.01",
+          },
+        ];
+  };
 
-  // Trạng thái input form thêm cuộc họp
+  const [meetings, setMeetings] = useState(getSavedMeetings);
   const [newMeeting, setNewMeeting] = useState({
     title: "",
     datetime: "",
     location: "",
   });
 
-  // Xử lý thay đổi input form
+  // Cập nhật localStorage mỗi khi meetings thay đổi
+  useEffect(() => {
+    localStorage.setItem("meetings", JSON.stringify(meetings));
+  }, [meetings]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setNewMeeting((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Thêm cuộc họp mới
   const handleAdd = () => {
     if (!newMeeting.title || !newMeeting.datetime || !newMeeting.location) {
       alert("Điền đầy đủ thông tin cuộc họp đi bạn!");
@@ -44,7 +51,6 @@ function CuocHop() {
     setNewMeeting({ title: "", datetime: "", location: "" });
   };
 
-  // Xóa cuộc họp
   const handleDelete = (id) => {
     if (window.confirm("Bạn chắc chắn muốn xóa cuộc họp này chứ?")) {
       setMeetings((prev) => prev.filter((m) => m.id !== id));

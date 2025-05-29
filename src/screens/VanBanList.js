@@ -27,7 +27,17 @@ const initialDocuments = [
 const PAGE_SIZE = 10;
 
 const VanBanList = () => {
-  const [documents, setDocuments] = useState(initialDocuments);
+  // Khởi tạo documents từ localStorage hoặc fallback về initialDocuments
+  const [documents, setDocuments] = useState(() => {
+    const saved = localStorage.getItem("vanBanDocuments");
+    return saved ? JSON.parse(saved) : initialDocuments;
+  });
+
+  // Lưu documents vào localStorage mỗi khi documents thay đổi
+  useEffect(() => {
+    localStorage.setItem("vanBanDocuments", JSON.stringify(documents));
+  }, [documents]);
+
   const [form, setForm] = useState({
     title: "",
     type: "",
@@ -39,31 +49,46 @@ const VanBanList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [fileURLs, setFileURLs] = useState({}); // id -> objectURL
 
-  // Cleanup URL objects khi documents thay đổi hoặc component unmount
+  // Tạo và dọn dẹp URL object cho file để hiển thị link download
   useEffect(() => {
-    // Tạo URLs mới cho file trong documents
     const newFileURLs = {};
     documents.forEach((doc) => {
       if (doc.file) {
-        newFileURLs[doc.id] = URL.createObjectURL(doc.file);
+        // file trong localStorage không thể giữ được File object nguyên vẹn,
+        // nên mình phải xử lý khác, mình sẽ serialize file thành base64 để đảm bảo.
+        // Nhưng ở đây bạn đang lưu trực tiếp file object, React ko lưu được trong JSON.
+        // Vì vậy ta cần xử lý lại file lưu trữ (xem phần giải thích dưới)
+        if (doc.file.data) {
+          // file được lưu dưới dạng base64 rồi
+          const byteCharacters = atob(doc.file.data);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: doc.file.type });
+          newFileURLs[doc.id] = URL.createObjectURL(blob);
+        }
       }
     });
-    // Giải phóng URL cũ
+    // Giải phóng url cũ
     Object.values(fileURLs).forEach((url) => URL.revokeObjectURL(url));
     setFileURLs(newFileURLs);
 
-    // Cleanup khi component unmount
+    // Cleanup khi unmount
     return () => {
       Object.values(newFileURLs).forEach((url) => URL.revokeObjectURL(url));
     };
   }, [documents]);
 
+  // Lọc theo search
   const filteredDocs = documents.filter(
     (d) =>
       d.title.toLowerCase().includes(search.toLowerCase()) ||
       d.type.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Phân trang
   const pagedDocs = filteredDocs.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
@@ -72,14 +97,48 @@ const VanBanList = () => {
   const resetForm = () =>
     setForm({ title: "", type: "", issuedDate: "", file: null });
 
-  const handleAdd = () => {
+  // Chuyển file thành base64 để lưu vào localStorage (vì localStorage không lưu được object File)
+  const fileToBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64Data = reader.result.split(",")[1]; // lấy phần base64
+        resolve({
+          name: file.name,
+          type: file.type,
+          data: base64Data,
+        });
+      };
+      reader.onerror = (error) => reject(error);
+    });
+
+  const handleAdd = async () => {
     if (!form.title || !form.type || !form.issuedDate) {
       alert("Vui lòng nhập đủ thông tin!");
       return;
     }
+    let fileData = null;
+    if (form.file) {
+      try {
+        fileData = await fileToBase64(form.file);
+      } catch {
+        alert("Lỗi xử lý file!");
+        return;
+      }
+    }
     const newId =
       documents.length > 0 ? Math.max(...documents.map((d) => d.id)) + 1 : 1;
-    setDocuments([...documents, { id: newId, ...form }]);
+    setDocuments([
+      ...documents,
+      {
+        id: newId,
+        title: form.title,
+        type: form.type,
+        issuedDate: form.issuedDate,
+        file: fileData,
+      },
+    ]);
     resetForm();
   };
 
@@ -89,18 +148,39 @@ const VanBanList = () => {
       title: doc.title,
       type: doc.type,
       issuedDate: doc.issuedDate,
-      file: doc.file || null,
+      file: doc.file
+        ? new File([], doc.file.name, { type: doc.file.type })
+        : null, // không tải lại file gốc được, chỉ giữ null hoặc tạo File rỗng
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.title || !form.type || !form.issuedDate) {
       alert("Vui lòng nhập đủ thông tin!");
       return;
     }
+    let fileData = null;
+    if (form.file && form.file instanceof File) {
+      try {
+        fileData = await fileToBase64(form.file);
+      } catch {
+        alert("Lỗi xử lý file!");
+        return;
+      }
+    } else if (form.file && form.file.data) {
+      fileData = form.file; // giữ nguyên file đã lưu
+    }
     setDocuments(
       documents.map((d) =>
-        d.id === editingId ? { id: editingId, ...form } : d
+        d.id === editingId
+          ? {
+              id: editingId,
+              title: form.title,
+              type: form.type,
+              issuedDate: form.issuedDate,
+              file: fileData,
+            }
+          : d
       )
     );
     setEditingId(null);
@@ -186,14 +266,11 @@ const VanBanList = () => {
             </tr>
           )}
 
-          {pagedDocs.map((doc) => (
-            <tr
-              key={doc.id}
-              style={editingId === doc.id ? { backgroundColor: "#f0f0f0" } : {}}
-            >
-              <td>{doc.id}</td>
-              <td>
-                {editingId === doc.id ? (
+          {pagedDocs.map((doc) =>
+            editingId === doc.id ? (
+              <tr key={doc.id} style={{ backgroundColor: "#ffeeba" }}>
+                <td>{doc.id}</td>
+                <td>
                   <input
                     type="text"
                     value={form.title}
@@ -201,23 +278,15 @@ const VanBanList = () => {
                       setForm({ ...form, title: e.target.value })
                     }
                   />
-                ) : (
-                  doc.title
-                )}
-              </td>
-              <td>
-                {editingId === doc.id ? (
+                </td>
+                <td>
                   <input
                     type="text"
                     value={form.type}
                     onChange={(e) => setForm({ ...form, type: e.target.value })}
                   />
-                ) : (
-                  doc.type
-                )}
-              </td>
-              <td>
-                {editingId === doc.id ? (
+                </td>
+                <td>
                   <input
                     type="date"
                     value={form.issuedDate}
@@ -225,73 +294,104 @@ const VanBanList = () => {
                       setForm({ ...form, issuedDate: e.target.value })
                     }
                   />
-                ) : (
-                  doc.issuedDate
-                )}
-              </td>
-              <td>
-                {editingId === doc.id ? (
+                </td>
+                <td>
                   <input type="file" onChange={handleFileChange} />
-                ) : (
-                  renderFileLink(doc)
-                )}
-              </td>
-              <td>
-                {editingId === doc.id ? (
-                  <>
-                    <button
-                      onClick={handleSave}
-                      style={{ marginRight: 8 }}
-                      title="Lưu thay đổi"
-                    >
-                      💾 Lưu
-                    </button>
-                    <button onClick={handleCancel} title="Hủy">
-                      ❌ Hủy
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => handleEdit(doc)}
-                      style={{ marginRight: 8 }}
-                      title="Sửa"
-                    >
-                      ✏️ Sửa
-                    </button>
-                    <button onClick={() => handleDelete(doc.id)} title="Xóa">
-                      🗑️ Xóa
-                    </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
+                  <div style={{ fontSize: 12, color: "#666" }}>
+                    {form.file && form.file.name}
+                  </div>
+                </td>
+                <td>
+                  <button onClick={handleSave}>💾 Lưu</button>{" "}
+                  <button onClick={handleCancel}>❌ Hủy</button>
+                </td>
+              </tr>
+            ) : (
+              <tr key={doc.id}>
+                <td>{doc.id}</td>
+                <td>{doc.title}</td>
+                <td>{doc.type}</td>
+                <td>{doc.issuedDate}</td>
+                <td>{renderFileLink(doc)}</td>
+                <td>
+                  <button onClick={() => handleEdit(doc)}>✏️ Sửa</button>{" "}
+                  <button onClick={() => handleDelete(doc.id)}>🗑️ Xóa</button>
+                </td>
+              </tr>
+            )
+          )}
         </tbody>
       </table>
 
-      <h3>Thêm văn bản mới</h3>
-      <div style={{ display: "flex", gap: 10, marginBottom: 40 }}>
-        <input
-          type="text"
-          placeholder="Tiêu đề"
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-        />
-        <input
-          type="text"
-          placeholder="Loại văn bản"
-          value={form.type}
-          onChange={(e) => setForm({ ...form, type: e.target.value })}
-        />
-        <input
-          type="date"
-          value={form.issuedDate}
-          onChange={(e) => setForm({ ...form, issuedDate: e.target.value })}
-        />
-        <input type="file" onChange={handleFileChange} />
-        <button onClick={handleAdd}>➕ Thêm</button>
+      {/* Phân trang */}
+      <div style={{ marginBottom: 20 }}>
+        {Array.from(
+          { length: Math.ceil(filteredDocs.length / PAGE_SIZE) },
+          (_, i) => i + 1
+        ).map((page) => (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            style={{
+              marginRight: 4,
+              padding: "6px 12px",
+              backgroundColor: currentPage === page ? "#007bff" : "#f0f0f0",
+              color: currentPage === page ? "white" : "black",
+              border: "none",
+              borderRadius: 4,
+              cursor: "pointer",
+            }}
+          >
+            {page}
+          </button>
+        ))}
       </div>
+
+      {/* Thêm mới */}
+      {editingId === null && (
+        <div
+          style={{
+            border: "1px solid #ccc",
+            padding: 12,
+            borderRadius: 6,
+            backgroundColor: "#fafafa",
+          }}
+        >
+          <h3>Thêm Văn Bản Mới</h3>
+          <div style={{ marginBottom: 8 }}>
+            <input
+              type="text"
+              placeholder="Tiêu đề"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              style={{ width: "100%", padding: 8 }}
+            />
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <input
+              type="text"
+              placeholder="Loại văn bản"
+              value={form.type}
+              onChange={(e) => setForm({ ...form, type: e.target.value })}
+              style={{ width: "100%", padding: 8 }}
+            />
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <input
+              type="date"
+              value={form.issuedDate}
+              onChange={(e) => setForm({ ...form, issuedDate: e.target.value })}
+              style={{ width: "100%", padding: 8 }}
+            />
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <input type="file" onChange={handleFileChange} />
+          </div>
+          <button onClick={handleAdd} style={{ padding: "8px 16px" }}>
+            ➕ Thêm mới
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,33 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const KhieuNai = () => {
-  const [khieuNaiList, setKhieuNaiList] = useState([
-    {
-      id: 1,
-      hoTen: "Nguyễn Văn A",
-      noiDung: "Tiếng ồn từ căn hộ tầng trên.",
-      ngayGui: "2025-05-20",
-      trangThai: "Chưa xử lý",
-    },
-    {
-      id: 2,
-      hoTen: "Trần Thị B",
-      noiDung: "Mùi rác hành lang gây khó chịu.",
-      ngayGui: "2025-05-21",
-      trangThai: "Đã giải quyết",
-    },
-  ]);
+  const [khieuNaiList, setKhieuNaiList] = useState(() => {
+    const saved = localStorage.getItem("khieuNaiList");
+    return saved
+      ? JSON.parse(saved)
+      : [
+          {
+            id: 1,
+            hoTen: "Nguyễn Văn A",
+            noiDung: "Tiếng ồn từ căn hộ tầng trên.",
+            ngayGui: "2025-05-20",
+            trangThai: "Chưa xử lý",
+          },
+          {
+            id: 2,
+            hoTen: "Trần Thị B",
+            noiDung: "Mùi rác hành lang gây khó chịu.",
+            ngayGui: "2025-05-21",
+            trangThai: "Đã giải quyết",
+          },
+        ];
+  });
 
   const [filterTrangThai, setFilterTrangThai] = useState("Tất cả");
   const [searchDate, setSearchDate] = useState("");
-  const [editingId, setEditingId] = useState(null); // ID của khiếu nại đang chỉnh sửa
+  const [editingId, setEditingId] = useState(null);
+
+  useEffect(() => {
+    localStorage.setItem("khieuNaiList", JSON.stringify(khieuNaiList));
+  }, [khieuNaiList]);
 
   const handleTrangThaiChange = (id, newTrangThai) => {
     const updatedList = khieuNaiList.map((item) =>
       item.id === id ? { ...item, trangThai: newTrangThai } : item
     );
     setKhieuNaiList(updatedList);
-    setEditingId(null); // Thoát chế độ chỉnh sửa sau khi chọn
+    setEditingId(null);
   };
 
   const getColor = (trangThai) => {

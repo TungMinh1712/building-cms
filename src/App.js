@@ -7,9 +7,6 @@ import VanBanList from "./screens/VanBanList";
 import NhiemVu from "./screens/NhiemVu";
 import CuocHop from "./screens/CuocHop";
 import KhieuNai from "./screens/KhieuNai";
-import CaiDat from "./screens/CaiDat";
-import Login from "./screens/auth/Login";
-import Register from "./screens/auth/Register";
 import { getCurrentUser } from "./utils/auth";
 import { Navigate } from "react-router-dom";
 
@@ -25,9 +22,7 @@ function App() {
             <Route path="/nhiemvu" element={<NhiemVu />} />
             <Route path="/cuochop" element={<CuocHop />} />
             <Route path="/khieunai" element={<KhieuNai />} />
-            <Route path="/caidat" element={<CaiDat />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+
             <Route
               path="/bqt"
               element={

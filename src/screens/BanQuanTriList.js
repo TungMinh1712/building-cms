@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const initialData = [
   {
@@ -16,11 +16,21 @@ const initialData = [
 ];
 
 const BanQuanTriList = () => {
-  const [data, setData] = useState(initialData);
+  // Load từ localStorage hoặc dùng initialData
+  const [data, setData] = useState(() => {
+    const stored = localStorage.getItem("banQuanTriData");
+    return stored ? JSON.parse(stored) : initialData;
+  });
+
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ name: "", role: "", email: "" });
   const [search, setSearch] = useState("");
   const [sortAsc, setSortAsc] = useState(true);
+
+  // Lưu vào localStorage mỗi khi data thay đổi
+  useEffect(() => {
+    localStorage.setItem("banQuanTriData", JSON.stringify(data));
+  }, [data]);
 
   const handleEdit = (item) => {
     setEditingId(item.id);

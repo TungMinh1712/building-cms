@@ -25,10 +25,17 @@ const initialTasks = [
   },
 ];
 
-const assignees = ["Bùi Thạch Đức", "Nguyễn Phương Nam"];
+const assignees = ["Nguyễn Văn A", "Trần Thị B", "Lê Văn C", "Phạm Thị D"];
+
+const STORAGE_KEY = "tasks_nhiemvu";
 
 const NhiemVu = () => {
-  const [tasks, setTasks] = useState(initialTasks);
+  // Lấy data từ localStorage nếu có, không thì dùng initialTasks
+  const [tasks, setTasks] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : initialTasks;
+  });
+
   const [form, setForm] = useState({
     title: "",
     status: "Chưa hoàn thành",
@@ -40,6 +47,12 @@ const NhiemVu = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const PAGE_SIZE = 5;
+
+  // Hàm cập nhật task và đồng bộ localStorage luôn
+  const updateTasks = (newTasks) => {
+    setTasks(newTasks);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newTasks));
+  };
 
   const handleAdd = () => {
     if (!form.title.trim()) {
@@ -56,7 +69,8 @@ const NhiemVu = () => {
     }
     const newId =
       tasks.length > 0 ? Math.max(...tasks.map((t) => t.id)) + 1 : 1;
-    setTasks([...tasks, { id: newId, ...form }]);
+    const newTasks = [...tasks, { id: newId, ...form }];
+    updateTasks(newTasks);
     setForm({
       title: "",
       status: "Chưa hoàn thành",
@@ -88,9 +102,10 @@ const NhiemVu = () => {
       alert("Cần chọn hạn chót cho nhiệm vụ!");
       return;
     }
-    setTasks(
-      tasks.map((t) => (t.id === editingId ? { id: editingId, ...form } : t))
+    const newTasks = tasks.map((t) =>
+      t.id === editingId ? { id: editingId, ...form } : t
     );
+    updateTasks(newTasks);
     setEditingId(null);
     setForm({
       title: "",
@@ -112,7 +127,8 @@ const NhiemVu = () => {
 
   const handleDelete = (id) => {
     if (window.confirm("Bạn có chắc muốn xóa nhiệm vụ này?")) {
-      setTasks(tasks.filter((t) => t.id !== id));
+      const newTasks = tasks.filter((t) => t.id !== id);
+      updateTasks(newTasks);
     }
   };
 
@@ -305,9 +321,15 @@ const NhiemVu = () => {
           type="date"
           value={form.deadline}
           onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-          title="Hạn chót nhiệm vụ"
         />
-        <button onClick={handleAdd}>➕ Thêm</button>
+        {!editingId && (
+          <button
+            onClick={handleAdd}
+            style={{ backgroundColor: "#4CAF50", color: "white" }}
+          >
+            ➕ Thêm
+          </button>
+        )}
       </div>
     </div>
   );
