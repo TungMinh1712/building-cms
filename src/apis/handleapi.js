@@ -1,27 +1,30 @@
 // src/apis/handleapi.js
-import axios from "axios";
-
-const BASE_URL = "http://localhost:5000/api"; // chỉnh nếu cần
+const mockUsers = [];
 
 const callApi = async (endpoint, method = "GET", data = null) => {
-  const token = localStorage.getItem("user")
-    ? JSON.parse(localStorage.getItem("user")).token
-    : null;
+  await new Promise((res) => setTimeout(res, 500)); // giả lập delay mạng
 
-  const headers = {
-    "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
+  if (endpoint === "/register" && method === "POST") {
+    const { username, password } = data;
+    if (mockUsers.find((u) => u.username === username)) {
+      return { success: false, message: "Tên đăng nhập đã tồn tại" };
+    }
+    mockUsers.push({ username, password, token: "fake-jwt-token" });
+    return { success: true };
+  }
 
-  const config = {
-    method,
-    url: `${BASE_URL}${endpoint}`,
-    headers,
-    data,
-  };
+  if (endpoint === "/login" && method === "POST") {
+    const { username, password } = data;
+    const user = mockUsers.find(
+      (u) => u.username === username && u.password === password
+    );
+    if (!user) {
+      return { success: false, message: "Sai tên đăng nhập hoặc mật khẩu" };
+    }
+    return { token: user.token, user: { username: user.username } };
+  }
 
-  const res = await axios(config);
-  return res.data;
+  return { success: false, message: "Endpoint không hợp lệ" };
 };
 
 export default callApi;
