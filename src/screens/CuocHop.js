@@ -28,6 +28,9 @@ function CuocHop() {
     datetime: "",
     location: "",
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [editingId, setEditingId] = useState(null);
+  const itemsPerPage = 5;
 
   // Cập nhật localStorage mỗi khi meetings thay đổi
   useEffect(() => {
@@ -47,18 +50,59 @@ function CuocHop() {
     const newId = meetings.length
       ? Math.max(...meetings.map((m) => m.id)) + 1
       : 1;
-    setMeetings((prev) => [...prev, { id: newId, ...newMeeting }]);
+    const newMeetings = [...meetings, { id: newId, ...newMeeting }];
+    setMeetings(newMeetings);
+    setCurrentPage(Math.ceil(newMeetings.length / itemsPerPage)); // Chuyển tới trang cuối
+    setNewMeeting({ title: "", datetime: "", location: "" });
+  };
+
+  const handleEdit = (meeting) => {
+    setEditingId(meeting.id);
+    setNewMeeting({
+      title: meeting.title,
+      datetime: meeting.datetime,
+      location: meeting.location,
+    });
+  };
+
+  const handleSave = () => {
+    if (!newMeeting.title || !newMeeting.datetime || !newMeeting.location) {
+      alert("Điền đầy đủ thông tin cuộc họp đi bạn!");
+      return;
+    }
+    const updatedMeetings = meetings.map((m) =>
+      m.id === editingId ? { id: editingId, ...newMeeting } : m
+    );
+    setMeetings(updatedMeetings);
+    setEditingId(null);
+    setNewMeeting({ title: "", datetime: "", location: "" });
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
     setNewMeeting({ title: "", datetime: "", location: "" });
   };
 
   const handleDelete = (id) => {
     if (window.confirm("Bạn chắc chắn muốn xóa cuộc họp này chứ?")) {
-      setMeetings((prev) => prev.filter((m) => m.id !== id));
+      const newMeetings = meetings.filter((m) => m.id !== id);
+      setMeetings(newMeetings);
+      // Điều chỉnh trang hiện tại nếu cần
+      const maxPage = Math.ceil(newMeetings.length / itemsPerPage);
+      setCurrentPage((prev) => Math.min(prev, maxPage || 1));
     }
   };
 
+  // Phân trang
+  const totalPages = Math.ceil(meetings.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedMeetings = meetings.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
+
   return (
-    <div>
+    <div style={{ maxWidth: 900, margin: "auto" }}>
       <h2>Quản lý Cuộc họp</h2>
 
       <div
@@ -69,21 +113,21 @@ function CuocHop() {
           borderRadius: 6,
         }}
       >
-        <h3>Thêm cuộc họp mới</h3>
+        <h3>{editingId ? "Chỉnh sửa cuộc họp" : "Thêm cuộc họp mới"}</h3>
         <input
           type="text"
           name="title"
           placeholder="Tiêu đề"
           value={newMeeting.title}
           onChange={handleChange}
-          style={{ marginRight: 10 }}
+          style={{ marginRight: 10, padding: 8 }}
         />
         <input
           type="datetime-local"
           name="datetime"
           value={newMeeting.datetime}
           onChange={handleChange}
-          style={{ marginRight: 10 }}
+          style={{ marginRight: 10, padding: 8 }}
         />
         <input
           type="text"
@@ -91,9 +135,44 @@ function CuocHop() {
           placeholder="Địa điểm"
           value={newMeeting.location}
           onChange={handleChange}
-          style={{ marginRight: 10 }}
+          style={{ marginRight: 10, padding: 8 }}
         />
-        <button onClick={handleAdd}>Thêm</button>
+        {editingId ? (
+          <>
+            <button
+              onClick={handleSave}
+              style={{
+                marginRight: 10,
+                backgroundColor: "#4CAF50",
+                color: "white",
+                padding: "8px 16px",
+              }}
+            >
+              Lưu
+            </button>
+            <button
+              onClick={handleCancel}
+              style={{
+                backgroundColor: "#dc3545",
+                color: "white",
+                padding: "8px 16px",
+              }}
+            >
+              Hủy
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={handleAdd}
+            style={{
+              backgroundColor: "#4CAF50",
+              color: "white",
+              padding: "8px 16px",
+            }}
+          >
+            Thêm
+          </button>
+        )}
       </div>
 
       <table
@@ -103,6 +182,7 @@ function CuocHop() {
       >
         <thead style={{ backgroundColor: "#f0f0f0" }}>
           <tr>
+            <th>ID</th>
             <th>Tiêu đề</th>
             <th>Ngày giờ</th>
             <th>Địa điểm</th>
@@ -110,24 +190,33 @@ function CuocHop() {
           </tr>
         </thead>
         <tbody>
-          {meetings.length === 0 ? (
+          {paginatedMeetings.length === 0 ? (
             <tr>
-              <td colSpan="4" style={{ textAlign: "center" }}>
+              <td colSpan="5" style={{ textAlign: "center" }}>
                 Chưa có cuộc họp nào.
               </td>
             </tr>
           ) : (
-            meetings.map(({ id, title, datetime, location }) => (
+            paginatedMeetings.map(({ id, title, datetime, location }) => (
               <tr key={id}>
+                <td>{id}</td>
                 <td>{title}</td>
                 <td>{new Date(datetime).toLocaleString()}</td>
                 <td>{location}</td>
                 <td>
                   <button
+                    onClick={() =>
+                      handleEdit({ id, title, datetime, location })
+                    }
+                    style={{ marginRight: 10, color: "blue" }}
+                  >
+                    ✏️ Sửa
+                  </button>
+                  <button
                     onClick={() => handleDelete(id)}
                     style={{ color: "red" }}
                   >
-                    Xóa
+                    🗑️ Xóa
                   </button>
                 </td>
               </tr>
@@ -135,6 +224,25 @@ function CuocHop() {
           )}
         </tbody>
       </table>
+
+      {/* Điều khiển phân trang */}
+      <div style={{ marginBottom: 20, textAlign: "center" }}>
+        <button
+          onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          ◀ Trước
+        </button>
+        <span style={{ margin: "0 10px" }}>
+          Trang {currentPage} / {totalPages}
+        </span>
+        <button
+          onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
+          Sau ▶
+        </button>
+      </div>
     </div>
   );
 }

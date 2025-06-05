@@ -20,12 +20,71 @@ const KhieuNai = () => {
             ngayGui: "2025-05-21",
             trangThai: "Đã giải quyết",
           },
+          {
+            id: 3,
+            hoTen: "Lê Văn C",
+            noiDung: "Thang máy hay bị hỏng.",
+            ngayGui: "2025-05-22",
+            trangThai: "Đang xử lý",
+          },
+          {
+            id: 4,
+            hoTen: "Phạm Thị D",
+            noiDung: "Hành lang không được vệ sinh thường xuyên.",
+            ngayGui: "2025-05-23",
+            trangThai: "Chưa xử lý",
+          },
+          {
+            id: 5,
+            hoTen: "Hoàng Văn E",
+            noiDung: "Chó đi vệ sinh bừa bãi khu vực công cộng.",
+            ngayGui: "2025-05-23",
+            trangThai: "Đã giải quyết",
+          },
+          {
+            id: 6,
+            hoTen: "Đỗ Thị F",
+            noiDung: "Không có chỗ đậu xe cho khách.",
+            ngayGui: "2025-05-24",
+            trangThai: "Đang xử lý",
+          },
+          {
+            id: 7,
+            hoTen: "Trịnh Văn G",
+            noiDung: "Camera an ninh hoạt động không ổn định.",
+            ngayGui: "2025-05-25",
+            trangThai: "Chưa xử lý",
+          },
+          {
+            id: 8,
+            hoTen: "Ngô Thị H",
+            noiDung: "Ban quản lý không phản hồi email.",
+            ngayGui: "2025-05-26",
+            trangThai: "Chưa xử lý",
+          },
+          {
+            id: 9,
+            hoTen: "Bùi Văn I",
+            noiDung: "Hệ thống điện hành lang chập chờn.",
+            ngayGui: "2025-05-26",
+            trangThai: "Đang xử lý",
+          },
+          {
+            id: 10,
+            hoTen: "Lý Thị K",
+            noiDung: "Không có nước nóng vào buổi sáng.",
+            ngayGui: "2025-05-27",
+            trangThai: "Đã giải quyết",
+          },
         ];
   });
 
   const [filterTrangThai, setFilterTrangThai] = useState("Tất cả");
   const [searchDate, setSearchDate] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedKhieuNai, setSelectedKhieuNai] = useState(null);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     localStorage.setItem("khieuNaiList", JSON.stringify(khieuNaiList));
@@ -36,7 +95,28 @@ const KhieuNai = () => {
       item.id === id ? { ...item, trangThai: newTrangThai } : item
     );
     setKhieuNaiList(updatedList);
+    setSelectedKhieuNai((prev) =>
+      prev && prev.id === id ? { ...prev, trangThai: newTrangThai } : prev
+    );
     setEditingId(null);
+  };
+
+  // New delete function
+  const handleDeleteKhieuNai = (id) => {
+    if (window.confirm("Bạn có chắc muốn xóa khiếu nại này?")) {
+      const updatedList = khieuNaiList.filter((item) => item.id !== id);
+      setKhieuNaiList(updatedList);
+      if (selectedKhieuNai && selectedKhieuNai.id === id) {
+        setSelectedKhieuNai(null);
+      }
+      // Adjust current page if necessary
+      const totalPagesAfterDelete = Math.ceil(
+        updatedList.length / itemsPerPage
+      );
+      if (currentPage > totalPagesAfterDelete && totalPagesAfterDelete > 0) {
+        setCurrentPage(totalPagesAfterDelete);
+      }
+    }
   };
 
   const getColor = (trangThai) => {
@@ -59,8 +139,23 @@ const KhieuNai = () => {
     return matchTrangThai && matchDate;
   });
 
+  const totalPages = Math.ceil(filteredList.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedList = filteredList.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
+
+  const handleSelectKhieuNai = (item) => {
+    setSelectedKhieuNai(item);
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedKhieuNai(null);
+  };
+
   return (
-    <div>
+    <div style={{ maxWidth: 900, margin: "auto" }}>
       <h2>🤬 Danh sách Khiếu Nại</h2>
 
       {/* Bộ lọc */}
@@ -68,7 +163,11 @@ const KhieuNai = () => {
         <label style={{ marginRight: 10 }}>Lọc theo trạng thái:</label>
         <select
           value={filterTrangThai}
-          onChange={(e) => setFilterTrangThai(e.target.value)}
+          onChange={(e) => {
+            setFilterTrangThai(e.target.value);
+            setCurrentPage(1);
+            setSelectedKhieuNai(null);
+          }}
           style={{ marginRight: 20 }}
         >
           <option value="Tất cả">Tất cả</option>
@@ -81,34 +180,51 @@ const KhieuNai = () => {
         <input
           type="date"
           value={searchDate}
-          onChange={(e) => setSearchDate(e.target.value)}
+          onChange={(e) => {
+            setSearchDate(e.target.value);
+            setCurrentPage(1);
+            setSelectedKhieuNai(null);
+          }}
         />
       </div>
 
       {/* Bảng khiếu nại */}
-      <table border="1" cellPadding="8" style={{ width: "100%" }}>
+      <table
+        border="1"
+        cellPadding="8"
+        style={{ width: "100%", borderCollapse: "collapse" }}
+      >
         <thead style={{ backgroundColor: "#f5f5f5" }}>
           <tr>
             <th>STT</th>
             <th>Họ tên</th>
-            <th>Nội dung</th>
             <th>Ngày gửi</th>
             <th>Trạng thái</th>
+            <th>Hành động</th> {/* New column for actions */}
           </tr>
         </thead>
         <tbody>
-          {filteredList.length === 0 ? (
+          {paginatedList.length === 0 ? (
             <tr>
               <td colSpan="5" style={{ textAlign: "center" }}>
                 Không tìm thấy khiếu nại phù hợp.
               </td>
             </tr>
           ) : (
-            filteredList.map((item, index) => (
-              <tr key={item.id}>
-                <td>{index + 1}</td>
+            paginatedList.map((item, index) => (
+              <tr
+                key={item.id}
+                onClick={() => handleSelectKhieuNai(item)}
+                style={{
+                  cursor: "pointer",
+                  backgroundColor:
+                    selectedKhieuNai && selectedKhieuNai.id === item.id
+                      ? "#fff3cd"
+                      : "transparent",
+                }}
+              >
+                <td>{startIndex + index + 1}</td>
                 <td>{item.hoTen}</td>
-                <td>{item.noiDung}</td>
                 <td>{item.ngayGui}</td>
                 <td>
                   {editingId === item.id ? (
@@ -129,17 +245,111 @@ const KhieuNai = () => {
                         fontWeight: "bold",
                         cursor: "pointer",
                       }}
-                      onClick={() => setEditingId(item.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingId(item.id);
+                      }}
                     >
                       🖊️ {item.trangThai}
                     </span>
                   )}
+                </td>
+                <td>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteKhieuNai(item.id);
+                    }}
+                    style={{
+                      backgroundColor: "#dc3545",
+                      color: "white",
+                      border: "none",
+                      padding: "5px 10px",
+                      cursor: "pointer",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    🗑️ Xóa
+                  </button>
                 </td>
               </tr>
             ))
           )}
         </tbody>
       </table>
+
+      {/* Điều khiển phân trang */}
+      <div style={{ marginBottom: 20, textAlign: "center" }}>
+        <button
+          onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          ◀ Trước
+        </button>
+        <span style={{ margin: "0 10px" }}>
+          Trang {currentPage} / {totalPages}
+        </span>
+        <button
+          onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
+          Sau ▶
+        </button>
+      </div>
+
+      {/* Chi tiết khiếu nại */}
+      {selectedKhieuNai && (
+        <div
+          style={{
+            border: "1px solid #ddd",
+            padding: 15,
+            borderRadius: 6,
+            marginTop: 20,
+            backgroundColor: "#fafafa",
+          }}
+        >
+          <h3>Chi tiết Khiếu Nại</h3>
+          <p>
+            <strong>ID:</strong> {selectedKhieuNai.id}
+          </p>
+          <p>
+            <strong>Họ tên:</strong> {selectedKhieuNai.hoTen}
+          </p>
+          <p>
+            <strong>Nội dung:</strong> {selectedKhieuNai.noiDung}
+          </p>
+          <p>
+            <strong>Ngày gửi:</strong> {selectedKhieuNai.ngayGui}
+          </p>
+          <p>
+            <strong>Trạng thái:</strong>{" "}
+            <span style={{ color: getColor(selectedKhieuNai.trangThai) }}>
+              {selectedKhieuNai.trangThai}
+            </span>
+          </p>
+          <button
+            onClick={handleCloseDetail}
+            style={{
+              backgroundColor: "#dc3545",
+              color: "white",
+              padding: "8px 16px",
+              marginRight: "10px",
+            }}
+          >
+            Đóng
+          </button>
+          <button
+            onClick={() => handleDeleteKhieuNai(selectedKhieuNai.id)}
+            style={{
+              backgroundColor: "#dc3545",
+              color: "white",
+              padding: "8px 16px",
+            }}
+          >
+            🗑️ Xóa
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -3,31 +3,67 @@ import React, { useState, useEffect } from "react";
 const initialData = [
   {
     id: 1,
-    name: "Nguyễn Văn A",
+    name: "Nguyễn Văn An",
     role: "Trưởng Ban",
-    email: "A@example.com",
+    email: "an.nguyen@chungcu.vn",
   },
   {
     id: 2,
-    name: "Trần Thị B",
-    role: "Thành viên",
-    email: "B@example.com",
+    name: "Trần Thị Bình",
+    role: "Phó Ban",
+    email: "binh.tran@chungcu.vn",
   },
+  {
+    id: 3,
+    name: "Lê Văn Cường",
+    role: "Thành viên",
+    email: "cuong.le@chungcu.vn",
+  },
+  {
+    id: 4,
+    name: "Phạm Thị Dung",
+    role: "Thành viên",
+    email: "dung.pham@chungcu.vn",
+  },
+  { id: 5, name: "Đỗ Mạnh Hùng", role: "Thư ký", email: "hung.do@chungcu.vn" },
+  {
+    id: 6,
+    name: "Hoàng Thị Hạnh",
+    role: "Kế toán",
+    email: "hanh.hoang@chungcu.vn",
+  },
+  { id: 7, name: "Vũ Văn Khoa", role: "Giám sát", email: "khoa.vu@chungcu.vn" },
+  {
+    id: 8,
+    name: "Ngô Thị Lan",
+    role: "Thành viên",
+    email: "lan.ngo@chungcu.vn",
+  },
+  {
+    id: 9,
+    name: "Bùi Quang Minh",
+    role: "Thành viên",
+    email: "minh.bui@chungcu.vn",
+  },
+  { id: 10, name: "Tạ Thị Ngọc", role: "Ủy viên", email: "ngoc.ta@chungcu.vn" },
 ];
 
 const BanQuanTriList = () => {
-  // Load từ localStorage hoặc dùng initialData
   const [data, setData] = useState(() => {
     const stored = localStorage.getItem("banQuanTriData");
     return stored ? JSON.parse(stored) : initialData;
   });
 
+  const [originalOrderData, setOriginalOrderData] = useState(initialData);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ name: "", role: "", email: "" });
   const [search, setSearch] = useState("");
   const [sortAsc, setSortAsc] = useState(true);
 
-  // Lưu vào localStorage mỗi khi data thay đổi
+  // Phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
   useEffect(() => {
     localStorage.setItem("banQuanTriData", JSON.stringify(data));
   }, [data]);
@@ -38,16 +74,21 @@ const BanQuanTriList = () => {
   };
 
   const handleSave = () => {
-    setData(
-      data.map((item) => (item.id === editingId ? { ...item, ...form } : item))
+    const updated = data.map((item) =>
+      item.id === editingId ? { ...item, ...form } : item
     );
+    setData(updated);
     setEditingId(null);
     setForm({ name: "", role: "", email: "" });
   };
 
   const handleDelete = (id) => {
     if (window.confirm("Bạn có chắc muốn xóa?")) {
-      setData(data.filter((item) => item.id !== id));
+      const updatedData = data.filter((item) => item.id !== id);
+      setData(updatedData);
+      // Giữ người dùng ở trang hiện tại hợp lệ
+      const maxPage = Math.ceil(updatedData.length / itemsPerPage);
+      setCurrentPage((prev) => Math.min(prev, maxPage));
     }
   };
 
@@ -57,8 +98,12 @@ const BanQuanTriList = () => {
       return;
     }
     const newId = data.length ? Math.max(...data.map((i) => i.id)) + 1 : 1;
-    setData([...data, { id: newId, ...form }]);
+    const newItem = { id: newId, ...form };
+    const newData = [...data, newItem];
+    setData(newData);
+    setOriginalOrderData(newData);
     setForm({ name: "", role: "", email: "" });
+    setCurrentPage(Math.ceil(newData.length / itemsPerPage)); // chuyển tới trang cuối
   };
 
   const handleSort = () => {
@@ -67,12 +112,25 @@ const BanQuanTriList = () => {
     );
     setData(sorted);
     setSortAsc(!sortAsc);
+    setCurrentPage(1);
+  };
+
+  const handleReset = () => {
+    setData(originalOrderData);
+    setCurrentPage(1);
   };
 
   const filteredData = data.filter(
     (item) =>
       item.name.toLowerCase().includes(search.toLowerCase()) ||
       item.email.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedData = filteredData.slice(
+    startIndex,
+    startIndex + itemsPerPage
   );
 
   return (
@@ -84,10 +142,14 @@ const BanQuanTriList = () => {
           type="text"
           placeholder="🔍 Tìm theo tên hoặc email..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setCurrentPage(1);
+          }}
           style={{ flex: 1 }}
         />
         <button onClick={handleSort}>{sortAsc ? "🔼 A-Z" : "🔽 Z-A"}</button>
+        <button onClick={handleReset}>🔄 Reset</button>
       </div>
 
       <table
@@ -106,7 +168,7 @@ const BanQuanTriList = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredData.map((item) => (
+          {paginatedData.map((item) => (
             <tr
               key={item.id}
               style={
@@ -172,7 +234,7 @@ const BanQuanTriList = () => {
               </td>
             </tr>
           ))}
-          {filteredData.length === 0 && (
+          {paginatedData.length === 0 && (
             <tr>
               <td colSpan="5" style={{ textAlign: "center", color: "gray" }}>
                 Không tìm thấy thành viên nào...
@@ -181,6 +243,25 @@ const BanQuanTriList = () => {
           )}
         </tbody>
       </table>
+
+      {/* Điều khiển phân trang */}
+      <div style={{ marginBottom: 20, textAlign: "center" }}>
+        <button
+          onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          ◀ Trước
+        </button>
+        <span style={{ margin: "0 10px" }}>
+          Trang {currentPage} / {totalPages}
+        </span>
+        <button
+          onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
+          Sau ▶
+        </button>
+      </div>
 
       <h3>Thêm thành viên mới</h3>
       <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>

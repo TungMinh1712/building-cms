@@ -19,7 +19,6 @@ const Register = () => {
     }
 
     try {
-      // Giả lập gọi API đăng ký
       const res = await callApi("/register", "POST", { username, password });
 
       if (res.success) {
@@ -35,32 +34,66 @@ const Register = () => {
   };
 
   return (
-    <div>
-      <h2>Đăng ký</h2>
-      <input
-        type="text"
-        placeholder="Tên đăng nhập"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
-      <br />
-      <input
-        type="password"
-        placeholder="Mật khẩu"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <br />
-      <input
-        type="password"
-        placeholder="Xác nhận mật khẩu"
-        value={confirmPassword}
-        onChange={(e) => setConfirmPassword(e.target.value)}
-      />
-      <br />
-      <button onClick={handleRegister}>Đăng ký</button>
+    <div className="container mt-5">
+      <div className="row justify-content-center">
+        <div className="col-md-5">
+          <div className="card shadow">
+            <div className="card-body">
+              <h3 className="card-title text-center mb-4">Đăng ký tài khoản</h3>
+
+              <div className="mb-3">
+                <label className="form-label">Tên đăng nhập</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label">Mật khẩu</label>
+                <input
+                  type="password"
+                  className="form-control"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="form-label">Xác nhận mật khẩu</label>
+                <input
+                  type="password"
+                  className="form-control"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+
+              <button
+                className="btn btn-success w-100"
+                onClick={handleRegister}
+              >
+                Đăng ký
+              </button>
+              <p className="text-center mt-3">
+                Đã có tài khoản?{" "}
+                <span
+                  className="text-primary"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => navigate("/login")}
+                >
+                  Đăng nhập
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
 export default Register;
+// This code defines a Register component that allows users to create a new account.

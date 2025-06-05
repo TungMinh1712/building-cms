@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
 import {
   BrowserRouter as Router,
   Route,
@@ -13,8 +14,7 @@ import NhiemVu from "./screens/NhiemVu";
 import CuocHop from "./screens/CuocHop";
 import KhieuNai from "./screens/KhieuNai";
 import Login from "./screens/auth/Login";
-import Register from "./screens/auth/Register";
-import HomeScreen from "./screens/HomeScreen";
+import CuDan from "./screens/Cudan";
 import { getCurrentUser } from "./utils/auth";
 
 function App() {
@@ -27,8 +27,8 @@ function App() {
   const handleLogin = () => setIsLoggedIn(true);
 
   const handleLogout = () => {
-    localStorage.removeItem("user"); // Xoá user khỏi localStorage
-    setIsLoggedIn(false); // Cập nhật lại state
+    localStorage.removeItem("user");
+    setIsLoggedIn(false);
   };
 
   return (
@@ -37,19 +37,10 @@ function App() {
         {isLoggedIn && <Sidebar onLogout={handleLogout} />}
         <div style={{ flex: 1, padding: "1rem" }}>
           <Routes>
-            <Route
-              path="/"
-              element={
-                isLoggedIn ? <Navigate to="/bqt" replace /> : <HomeScreen />
-              }
-            />
+            <Route path="/" element={<Login onLoginSuccess={handleLogin} />} />
             <Route
               path="/login"
               element={<Login onLoginSuccess={handleLogin} />}
-            />
-            <Route
-              path="/register"
-              element={<Register onRegisterSuccess={handleLogin} />}
             />
             <Route
               path="/bqt"
@@ -59,6 +50,12 @@ function App() {
                 ) : (
                   <Navigate to="/login" replace />
                 )
+              }
+            />
+            <Route
+              path="/cudan"
+              element={
+                isLoggedIn ? <CuDan /> : <Navigate to="/login" replace />
               }
             />
             <Route

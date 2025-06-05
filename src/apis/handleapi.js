@@ -1,30 +1,40 @@
-// src/apis/handleapi.js
-const mockUsers = [];
+// apis/handleapi.js (or a separate mock file for testing)
+const mockAccounts = [
+  {
+    username: "bqt",
+    password: "bqt123",
+    role: "bqt",
+    token: "mock_bqt_token_123",
+    user: { id: 1, username: "bqt_user", role: "bqt" },
+  },
+  {
+    username: "cudan",
+    password: "cudan123",
+    role: "cudan",
+    token: "mock_cudan_token_456",
+    user: { id: 2, username: "cudan_user", role: "cudan" },
+  },
+];
 
-const callApi = async (endpoint, method = "GET", data = null) => {
-  await new Promise((res) => setTimeout(res, 500)); // giả lập delay mạng
-
-  if (endpoint === "/register" && method === "POST") {
+const callApi = async (url, method, data) => {
+  if (url === "/login" && method === "POST") {
     const { username, password } = data;
-    if (mockUsers.find((u) => u.username === username)) {
-      return { success: false, message: "Tên đăng nhập đã tồn tại" };
-    }
-    mockUsers.push({ username, password, token: "fake-jwt-token" });
-    return { success: true };
-  }
 
-  if (endpoint === "/login" && method === "POST") {
-    const { username, password } = data;
-    const user = mockUsers.find(
-      (u) => u.username === username && u.password === password
+    // Find matching account
+    const account = mockAccounts.find(
+      (acc) => acc.username === username && acc.password === password
     );
-    if (!user) {
-      return { success: false, message: "Sai tên đăng nhập hoặc mật khẩu" };
-    }
-    return { token: user.token, user: { username: user.username } };
-  }
 
-  return { success: false, message: "Endpoint không hợp lệ" };
+    if (account) {
+      return {
+        token: account.token,
+        user: account.user,
+      };
+    } else {
+      throw new Error("Invalid username or password");
+    }
+  }
+  throw new Error("API endpoint not supported");
 };
 
 export default callApi;

@@ -5,10 +5,19 @@ import "./Sidebar.css";
 const Sidebar = ({ onLogout }) => {
   const navigate = useNavigate();
 
+  // Lấy dữ liệu người dùng từ localStorage
+  const user = JSON.parse(localStorage.getItem("user"));
+  const userRole = user?.user?.role;
+
+  // Nếu vai trò không phải là "bqt", không render Sidebar
+  if (userRole !== "bqt") {
+    return null; // Trả về null để ẩn Sidebar
+  }
+
   const handleLogout = () => {
-    localStorage.removeItem("user"); // xóa localStorage để logout thật sự
-    if (onLogout) onLogout(); // gọi hàm cập nhật trạng thái đăng nhập ở App
-    navigate("/login"); // chuyển về trang login luôn
+    localStorage.removeItem("user"); // Xóa localStorage để đăng xuất
+    if (onLogout) onLogout(); // Gọi hàm cập nhật trạng thái đăng nhập ở App
+    navigate("/login"); // Chuyển hướng về trang login
   };
 
   const menuItems = [
@@ -22,7 +31,7 @@ const Sidebar = ({ onLogout }) => {
   return (
     <div className="sidebar-container">
       <h3 className="sidebar-title">
-        <span>🏢</span> Admin
+        <span>🏢</span> CHUNG CƯ
       </h3>
       <ul className="nav-list">
         {menuItems.map((item) => (

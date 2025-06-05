@@ -3,28 +3,82 @@ import React, { useState, useEffect } from "react";
 const initialDocuments = [
   {
     id: 1,
-    title: "Quyết định số 01",
+    title: "Quyết định bổ nhiệm trưởng phòng",
     type: "Quyết định",
-    issuedDate: "2024-01-10",
+    issuedDate: "2024-01-15",
     file: null,
   },
   {
     id: 2,
-    title: "Thông báo nghỉ lễ",
+    title: "Thông báo họp giao ban tháng 3",
     type: "Thông báo",
-    issuedDate: "2025-02-15",
+    issuedDate: "2024-03-01",
     file: null,
   },
   {
     id: 3,
-    title: "Kế hoạch công tác năm 2025",
+    title: "Kế hoạch đào tạo nội bộ quý 2",
     type: "Kế hoạch",
-    issuedDate: "2025-03-01",
+    issuedDate: "2024-04-10",
+    file: null,
+  },
+  {
+    id: 4,
+    title: "Báo cáo tài chính năm 2023",
+    type: "Báo cáo",
+    issuedDate: "2024-02-28",
+    file: null,
+  },
+  {
+    id: 5,
+    title: "Hướng dẫn sử dụng phần mềm HRM",
+    type: "Hướng dẫn",
+    issuedDate: "2024-01-05",
+    file: null,
+  },
+  {
+    id: 6,
+    title: "Thông báo nghỉ lễ 30/4 - 1/5",
+    type: "Thông báo",
+    issuedDate: "2024-04-20",
+    file: null,
+  },
+  {
+    id: 7,
+    title: "Quyết định khen thưởng quý I",
+    type: "Quyết định",
+    issuedDate: "2024-04-01",
+    file: null,
+  },
+  {
+    id: 8,
+    title: "Kế hoạch tổ chức đào tạo kỹ năng mềm",
+    type: "Kế hoạch",
+    issuedDate: "2024-03-15",
+    file: null,
+  },
+  {
+    id: 9,
+    title: "Báo cáo tổng kết hoạt động quý I",
+    type: "Báo cáo",
+    issuedDate: "2024-04-05",
+    file: null,
+  },
+  {
+    id: 10,
+    title: "Thông báo tuyển dụng tháng 5",
+    type: "Thông báo",
+    issuedDate: "2024-05-01",
+    file: null,
+  },
+  {
+    id: 11,
+    title: "Quyết định điều chuyển cán bộ",
+    type: "Quyết định",
+    issuedDate: "2024-05-10",
     file: null,
   },
 ];
-
-const PAGE_SIZE = 10;
 
 const VanBanList = () => {
   // Khởi tạo documents từ localStorage hoặc fallback về initialDocuments
@@ -48,18 +102,14 @@ const VanBanList = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [fileURLs, setFileURLs] = useState({}); // id -> objectURL
+  const itemsPerPage = 5;
 
   // Tạo và dọn dẹp URL object cho file để hiển thị link download
   useEffect(() => {
     const newFileURLs = {};
     documents.forEach((doc) => {
       if (doc.file) {
-        // file trong localStorage không thể giữ được File object nguyên vẹn,
-        // nên mình phải xử lý khác, mình sẽ serialize file thành base64 để đảm bảo.
-        // Nhưng ở đây bạn đang lưu trực tiếp file object, React ko lưu được trong JSON.
-        // Vì vậy ta cần xử lý lại file lưu trữ (xem phần giải thích dưới)
         if (doc.file.data) {
-          // file được lưu dưới dạng base64 rồi
           const byteCharacters = atob(doc.file.data);
           const byteNumbers = new Array(byteCharacters.length);
           for (let i = 0; i < byteCharacters.length; i++) {
@@ -89,15 +139,17 @@ const VanBanList = () => {
   );
 
   // Phân trang
-  const pagedDocs = filteredDocs.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
+  const totalPages = Math.ceil(filteredDocs.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedDocs = filteredDocs.slice(
+    startIndex,
+    startIndex + itemsPerPage
   );
 
   const resetForm = () =>
     setForm({ title: "", type: "", issuedDate: "", file: null });
 
-  // Chuyển file thành base64 để lưu vào localStorage (vì localStorage không lưu được object File)
+  // Chuyển file thành base64 để lưu vào localStorage
   const fileToBase64 = (file) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -129,7 +181,7 @@ const VanBanList = () => {
     }
     const newId =
       documents.length > 0 ? Math.max(...documents.map((d) => d.id)) + 1 : 1;
-    setDocuments([
+    const newDocuments = [
       ...documents,
       {
         id: newId,
@@ -138,7 +190,9 @@ const VanBanList = () => {
         issuedDate: form.issuedDate,
         file: fileData,
       },
-    ]);
+    ];
+    setDocuments(newDocuments);
+    setCurrentPage(Math.ceil(newDocuments.length / itemsPerPage)); // Chuyển tới trang cuối
     resetForm();
   };
 
@@ -150,7 +204,7 @@ const VanBanList = () => {
       issuedDate: doc.issuedDate,
       file: doc.file
         ? new File([], doc.file.name, { type: doc.file.type })
-        : null, // không tải lại file gốc được, chỉ giữ null hoặc tạo File rỗng
+        : null,
     });
   };
 
@@ -194,7 +248,11 @@ const VanBanList = () => {
 
   const handleDelete = (id) => {
     if (window.confirm("Bạn có chắc muốn xóa văn bản này?")) {
-      setDocuments(documents.filter((d) => d.id !== id));
+      const updatedDocuments = documents.filter((d) => d.id !== id);
+      setDocuments(updatedDocuments);
+      // Điều chỉnh trang hiện tại nếu cần
+      const maxPage = Math.ceil(updatedDocuments.length / itemsPerPage);
+      setCurrentPage((prev) => Math.min(prev, maxPage || 1));
     }
   };
 
@@ -236,7 +294,7 @@ const VanBanList = () => {
         value={search}
         onChange={(e) => {
           setSearch(e.target.value);
-          setCurrentPage(1);
+          setCurrentPage(1); // Reset về trang 1 khi tìm kiếm
         }}
         style={{ width: "100%", padding: 8, marginBottom: 12 }}
       />
@@ -258,7 +316,7 @@ const VanBanList = () => {
           </tr>
         </thead>
         <tbody>
-          {pagedDocs.length === 0 && (
+          {paginatedDocs.length === 0 && (
             <tr>
               <td colSpan="6" style={{ textAlign: "center", color: "gray" }}>
                 Không có văn bản nào phù hợp.
@@ -266,7 +324,7 @@ const VanBanList = () => {
             </tr>
           )}
 
-          {pagedDocs.map((doc) =>
+          {paginatedDocs.map((doc) =>
             editingId === doc.id ? (
               <tr key={doc.id} style={{ backgroundColor: "#ffeeba" }}>
                 <td>{doc.id}</td>
@@ -323,28 +381,23 @@ const VanBanList = () => {
         </tbody>
       </table>
 
-      {/* Phân trang */}
-      <div style={{ marginBottom: 20 }}>
-        {Array.from(
-          { length: Math.ceil(filteredDocs.length / PAGE_SIZE) },
-          (_, i) => i + 1
-        ).map((page) => (
-          <button
-            key={page}
-            onClick={() => setCurrentPage(page)}
-            style={{
-              marginRight: 4,
-              padding: "6px 12px",
-              backgroundColor: currentPage === page ? "#007bff" : "#f0f0f0",
-              color: currentPage === page ? "white" : "black",
-              border: "none",
-              borderRadius: 4,
-              cursor: "pointer",
-            }}
-          >
-            {page}
-          </button>
-        ))}
+      {/* Điều khiển phân trang */}
+      <div style={{ marginBottom: 20, textAlign: "center" }}>
+        <button
+          onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          ◀ Trước
+        </button>
+        <span style={{ margin: "0 10px" }}>
+          Trang {currentPage} / {totalPages}
+        </span>
+        <button
+          onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
+          Sau ▶
+        </button>
       </div>
 
       {/* Thêm mới */}

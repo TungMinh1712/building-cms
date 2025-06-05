@@ -1,4 +1,3 @@
-// src/screens/NhiemVu.js
 import React, { useState } from "react";
 
 const initialTasks = [
@@ -13,7 +12,7 @@ const initialTasks = [
     id: 2,
     title: "Họp Ban quản trị",
     status: "Đã hoàn thành",
-    assignee: "Trần Thị B",
+    assignee: "Trần Thị Bình",
     deadline: "2025-05-15",
   },
   {
@@ -23,9 +22,68 @@ const initialTasks = [
     assignee: "",
     deadline: "2025-06-01",
   },
+  {
+    id: 4,
+    title: "Kiểm tra hệ thống PCCC",
+    status: "Chưa hoàn thành",
+    assignee: "Nguyễn Văn An",
+    deadline: "2025-06-05",
+  },
+  {
+    id: 5,
+    title: "Chuẩn bị nội dung họp tháng 6",
+    status: "Đã hoàn thành",
+    assignee: "Lê Văn Cường",
+    deadline: "2025-05-28",
+  },
+  {
+    id: 6,
+    title: "Gửi email mời họp",
+    status: "Đã hoàn thành",
+    assignee: "Phạm Thị Dung",
+    deadline: "2025-05-20",
+  },
+  {
+    id: 7,
+    title: "Tổng hợp ý kiến cư dân",
+    status: "Chưa hoàn thành",
+    assignee: "Trần Thị Bình",
+    deadline: "2025-06-07",
+  },
+  {
+    id: 8,
+    title: "Hoàn thiện báo cáo tài chính quý II",
+    status: "Chưa hoàn thành",
+    assignee: "Nguyễn Văn An",
+    deadline: "2025-06-10",
+  },
+  {
+    id: 9,
+    title: "Cập nhật phần mềm quản lý",
+    status: "Chưa hoàn thành",
+    assignee: "Lê Văn Cường",
+    deadline: "2025-06-12",
+  },
+  {
+    id: 10,
+    title: "Kiểm kê trang thiết bị văn phòng",
+    status: "Chưa hoàn thành",
+    assignee: "",
+    deadline: "2025-06-15",
+  },
 ];
 
-const assignees = ["Nguyễn Văn A", "Trần Thị B", "Lê Văn C", "Phạm Thị D"];
+const assignees = [
+  "Nguyễn Văn An",
+  "Trần Thị Bình",
+  "Lê Văn Cường",
+  "Phạm Thị Dung",
+  "Hoàng Thị Hạnh",
+  "Vũ Văn Khoa",
+  "Ngô Thị Lan",
+  "Bùi Quang Minh",
+  "Tạ Thị Ngọc",
+];
 
 const STORAGE_KEY = "tasks_nhiemvu";
 
@@ -45,8 +103,7 @@ const NhiemVu = () => {
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
-  const PAGE_SIZE = 5;
+  const itemsPerPage = 5;
 
   // Hàm cập nhật task và đồng bộ localStorage luôn
   const updateTasks = (newTasks) => {
@@ -71,6 +128,7 @@ const NhiemVu = () => {
       tasks.length > 0 ? Math.max(...tasks.map((t) => t.id)) + 1 : 1;
     const newTasks = [...tasks, { id: newId, ...form }];
     updateTasks(newTasks);
+    setCurrentPage(Math.ceil(newTasks.length / itemsPerPage)); // Chuyển tới trang cuối
     setForm({
       title: "",
       status: "Chưa hoàn thành",
@@ -129,6 +187,9 @@ const NhiemVu = () => {
     if (window.confirm("Bạn có chắc muốn xóa nhiệm vụ này?")) {
       const newTasks = tasks.filter((t) => t.id !== id);
       updateTasks(newTasks);
+      // Điều chỉnh trang hiện tại nếu cần
+      const maxPage = Math.ceil(newTasks.length / itemsPerPage);
+      setCurrentPage((prev) => Math.min(prev, maxPage || 1));
     }
   };
 
@@ -136,9 +197,12 @@ const NhiemVu = () => {
     t.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  const pagedTasks = filteredTasks.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
+  // Phân trang
+  const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedTasks = filteredTasks.slice(
+    startIndex,
+    startIndex + itemsPerPage
   );
 
   return (
@@ -173,7 +237,7 @@ const NhiemVu = () => {
           </tr>
         </thead>
         <tbody>
-          {pagedTasks.length === 0 && (
+          {paginatedTasks.length === 0 && (
             <tr>
               <td colSpan="6" style={{ textAlign: "center", color: "gray" }}>
                 Không có nhiệm vụ phù hợp.
@@ -181,7 +245,7 @@ const NhiemVu = () => {
             </tr>
           )}
 
-          {pagedTasks.map((task) => (
+          {paginatedTasks.map((task) => (
             <tr
               key={task.id}
               style={
@@ -287,6 +351,25 @@ const NhiemVu = () => {
           ))}
         </tbody>
       </table>
+
+      {/* Điều khiển phân trang */}
+      <div style={{ marginBottom: 20, textAlign: "center" }}>
+        <button
+          onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          ◀ Trước
+        </button>
+        <span style={{ margin: "0 10px" }}>
+          Trang {currentPage} / {totalPages}
+        </span>
+        <button
+          onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
+          Sau ▶
+        </button>
+      </div>
 
       {/* Form thêm mới */}
       <h3>Thêm nhiệm vụ mới</h3>
