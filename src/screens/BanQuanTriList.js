@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const initialData = [
+export const initialData = [
   {
     id: 1,
     name: "Nguyễn Văn An",
@@ -86,7 +86,6 @@ const BanQuanTriList = () => {
     if (window.confirm("Bạn có chắc muốn xóa?")) {
       const updatedData = data.filter((item) => item.id !== id);
       setData(updatedData);
-      // Giữ người dùng ở trang hiện tại hợp lệ
       const maxPage = Math.ceil(updatedData.length / itemsPerPage);
       setCurrentPage((prev) => Math.min(prev, maxPage));
     }
@@ -103,7 +102,7 @@ const BanQuanTriList = () => {
     setData(newData);
     setOriginalOrderData(newData);
     setForm({ name: "", role: "", email: "" });
-    setCurrentPage(Math.ceil(newData.length / itemsPerPage)); // chuyển tới trang cuối
+    setCurrentPage(Math.ceil(newData.length / itemsPerPage));
   };
 
   const handleSort = () => {
@@ -244,7 +243,6 @@ const BanQuanTriList = () => {
         </tbody>
       </table>
 
-      {/* Điều khiển phân trang */}
       <div style={{ marginBottom: 20, textAlign: "center" }}>
         <button
           onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}

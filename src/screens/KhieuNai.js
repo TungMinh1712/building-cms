@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { initialData as BanQuanTriList } from "./BanQuanTriList"; // Giả sử BanQuanTriList được import từ file khác
 
 const KhieuNai = () => {
   const [khieuNaiList, setKhieuNaiList] = useState(() => {
@@ -12,6 +13,7 @@ const KhieuNai = () => {
             noiDung: "Tiếng ồn từ căn hộ tầng trên.",
             ngayGui: "2025-05-20",
             trangThai: "Chưa xử lý",
+            nguoiPhuTrachId: null,
           },
           {
             id: 2,
@@ -19,6 +21,7 @@ const KhieuNai = () => {
             noiDung: "Mùi rác hành lang gây khó chịu.",
             ngayGui: "2025-05-21",
             trangThai: "Đã giải quyết",
+            nguoiPhuTrachId: 2,
           },
           {
             id: 3,
@@ -26,6 +29,7 @@ const KhieuNai = () => {
             noiDung: "Thang máy hay bị hỏng.",
             ngayGui: "2025-05-22",
             trangThai: "Đang xử lý",
+            nguoiPhuTrachId: 1, // Chưa gán
           },
           {
             id: 4,
@@ -33,6 +37,7 @@ const KhieuNai = () => {
             noiDung: "Hành lang không được vệ sinh thường xuyên.",
             ngayGui: "2025-05-23",
             trangThai: "Chưa xử lý",
+            nguoiPhuTrachId: 3,
           },
           {
             id: 5,
@@ -40,6 +45,7 @@ const KhieuNai = () => {
             noiDung: "Chó đi vệ sinh bừa bãi khu vực công cộng.",
             ngayGui: "2025-05-23",
             trangThai: "Đã giải quyết",
+            nguoiPhuTrachId: 4,
           },
           {
             id: 6,
@@ -47,6 +53,7 @@ const KhieuNai = () => {
             noiDung: "Không có chỗ đậu xe cho khách.",
             ngayGui: "2025-05-24",
             trangThai: "Đang xử lý",
+            nguoiPhuTrachId: 9,
           },
           {
             id: 7,
@@ -54,6 +61,7 @@ const KhieuNai = () => {
             noiDung: "Camera an ninh hoạt động không ổn định.",
             ngayGui: "2025-05-25",
             trangThai: "Chưa xử lý",
+            nguoiPhuTrachId: 5,
           },
           {
             id: 8,
@@ -61,6 +69,7 @@ const KhieuNai = () => {
             noiDung: "Ban quản lý không phản hồi email.",
             ngayGui: "2025-05-26",
             trangThai: "Chưa xử lý",
+            nguoiPhuTrachId: null,
           },
           {
             id: 9,
@@ -68,6 +77,7 @@ const KhieuNai = () => {
             noiDung: "Hệ thống điện hành lang chập chờn.",
             ngayGui: "2025-05-26",
             trangThai: "Đang xử lý",
+            nguoiPhuTrachId: 6,
           },
           {
             id: 10,
@@ -75,6 +85,7 @@ const KhieuNai = () => {
             noiDung: "Không có nước nóng vào buổi sáng.",
             ngayGui: "2025-05-27",
             trangThai: "Đã giải quyết",
+            nguoiPhuTrachId: 7,
           },
         ];
   });
@@ -82,6 +93,7 @@ const KhieuNai = () => {
   const [filterTrangThai, setFilterTrangThai] = useState("Tất cả");
   const [searchDate, setSearchDate] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [editingNguoiPhuTrachId, setEditingNguoiPhuTrachId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedKhieuNai, setSelectedKhieuNai] = useState(null);
   const itemsPerPage = 5;
@@ -101,7 +113,31 @@ const KhieuNai = () => {
     setEditingId(null);
   };
 
-  // New delete function
+  const handleNguoiPhuTrachChange = (id, newNguoiPhuTrachId) => {
+    const updatedList = khieuNaiList.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            nguoiPhuTrachId: newNguoiPhuTrachId
+              ? Number(newNguoiPhuTrachId)
+              : null,
+          }
+        : item
+    );
+    setKhieuNaiList(updatedList);
+    setSelectedKhieuNai((prev) =>
+      prev && prev.id === id
+        ? {
+            ...prev,
+            nguoiPhuTrachId: newNguoiPhuTrachId
+              ? Number(newNguoiPhuTrachId)
+              : null,
+          }
+        : prev
+    );
+    setEditingNguoiPhuTrachId(null);
+  };
+
   const handleDeleteKhieuNai = (id) => {
     if (window.confirm("Bạn có chắc muốn xóa khiếu nại này?")) {
       const updatedList = khieuNaiList.filter((item) => item.id !== id);
@@ -109,7 +145,6 @@ const KhieuNai = () => {
       if (selectedKhieuNai && selectedKhieuNai.id === id) {
         setSelectedKhieuNai(null);
       }
-      // Adjust current page if necessary
       const totalPagesAfterDelete = Math.ceil(
         updatedList.length / itemsPerPage
       );
@@ -130,6 +165,14 @@ const KhieuNai = () => {
       default:
         return "black";
     }
+  };
+
+  const getNguoiPhuTrachName = (nguoiPhuTrachId) => {
+    if (!nguoiPhuTrachId) return "Chưa phân công";
+    const nguoiPhuTrach = BanQuanTriList.find(
+      (member) => member.id === nguoiPhuTrachId
+    );
+    return nguoiPhuTrach ? nguoiPhuTrach.name : "Chưa phân công";
   };
 
   const filteredList = khieuNaiList.filter((item) => {
@@ -200,13 +243,14 @@ const KhieuNai = () => {
             <th>Họ tên</th>
             <th>Ngày gửi</th>
             <th>Trạng thái</th>
-            <th>Hành động</th> {/* New column for actions */}
+            <th>Người phụ trách</th>
+            <th>Hành động</th>
           </tr>
         </thead>
         <tbody>
           {paginatedList.length === 0 ? (
             <tr>
-              <td colSpan="5" style={{ textAlign: "center" }}>
+              <td colSpan="6" style={{ textAlign: "center" }}>
                 Không tìm thấy khiếu nại phù hợp.
               </td>
             </tr>
@@ -250,7 +294,37 @@ const KhieuNai = () => {
                         setEditingId(item.id);
                       }}
                     >
-                      🖊️ {item.trangThai}
+                      {item.trangThai}
+                    </span>
+                  )}
+                </td>
+                <td>
+                  {editingNguoiPhuTrachId === item.id ? (
+                    <select
+                      value={item.nguoiPhuTrachId || ""}
+                      onChange={(e) =>
+                        handleNguoiPhuTrachChange(item.id, e.target.value)
+                      }
+                    >
+                      <option value="">Chưa phân công</option>
+                      {BanQuanTriList.map((member) => (
+                        <option key={member.id} value={member.id}>
+                          {member.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span
+                      style={{
+                        fontWeight: "bold",
+                        cursor: "pointer",
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingNguoiPhuTrachId(item.id);
+                      }}
+                    >
+                      {getNguoiPhuTrachName(item.nguoiPhuTrachId)}
                     </span>
                   )}
                 </td>
@@ -326,6 +400,31 @@ const KhieuNai = () => {
             <span style={{ color: getColor(selectedKhieuNai.trangThai) }}>
               {selectedKhieuNai.trangThai}
             </span>
+          </p>
+          <p>
+            <strong>Người phụ trách:</strong>{" "}
+            {editingNguoiPhuTrachId === selectedKhieuNai.id ? (
+              <select
+                value={selectedKhieuNai.nguoiPhuTrachId || ""}
+                onChange={(e) =>
+                  handleNguoiPhuTrachChange(selectedKhieuNai.id, e.target.value)
+                }
+              >
+                <option value="">Chưa phân công</option>
+                {BanQuanTriList.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span
+                style={{ cursor: "pointer" }}
+                onClick={() => setEditingNguoiPhuTrachId(selectedKhieuNai.id)}
+              >
+                {getNguoiPhuTrachName(selectedKhieuNai.nguoiPhuTrachId)}
+              </span>
+            )}
           </p>
           <button
             onClick={handleCloseDetail}

@@ -4,19 +4,44 @@ import { useNavigate } from "react-router-dom";
 const Cudan = ({ onLogout }) => {
   const navigate = useNavigate();
 
-  // State for complaint form
+  // Trạng thái cho form khiếu nại
   const [hoTen, setHoTen] = useState("");
   const [noiDung, setNoiDung] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  // State for document list
+  // Trạng thái cho danh sách văn bản
   const [vanBanList, setVanBanList] = useState([]);
   const [selectedVanBan, setSelectedVanBan] = useState(null);
-  const [fileURLs, setFileURLs] = useState({}); // id -> objectURL
+  const [fileURLs, setFileURLs] = useState({});
+  const [showVanBanModal, setShowVanBanModal] = useState(false);
 
-  // Load documents from localStorage on mount
+  // Dữ liệu thông báo mẫu
+  const announcements = [
+    {
+      id: 1,
+      title: "Thông báo bảo trì thang máy",
+      date: "2025-06-10",
+      content:
+        "Thang máy tòa A sẽ được bảo trì từ 9:00 đến 12:00 ngày 10/06/2025.",
+    },
+    {
+      id: 2,
+      title: "Họp cư dân quý 2",
+      date: "2025-06-15",
+      content:
+        "Mời cư dân tham dự họp tại hội trường B vào 19:00 ngày 15/06/2025.",
+    },
+    {
+      id: 3,
+      title: "Cập nhật quy định gửi xe",
+      date: "2025-06-05",
+      content: "Quy định mới về gửi xe có hiệu lực từ 10/06/2025.",
+    },
+  ];
+
+  // Tải văn bản từ localStorage khi mount
   useEffect(() => {
     const savedVanBan = localStorage.getItem("vanBanDocuments");
     if (savedVanBan) {
@@ -28,7 +53,7 @@ const Cudan = ({ onLogout }) => {
     }
   }, []);
 
-  // Create and cleanup URL objects for file downloads
+  // Tạo và dọn dẹp URL cho file tải xuống
   useEffect(() => {
     const newFileURLs = {};
     vanBanList.forEach((doc) => {
@@ -43,17 +68,15 @@ const Cudan = ({ onLogout }) => {
         newFileURLs[doc.id] = URL.createObjectURL(blob);
       }
     });
-    // Cleanup old URLs
     Object.values(fileURLs).forEach((url) => URL.revokeObjectURL(url));
     setFileURLs(newFileURLs);
 
-    // Cleanup when unmount
     return () => {
       Object.values(newFileURLs).forEach((url) => URL.revokeObjectURL(url));
     };
   }, [vanBanList]);
 
-  // Check localStorage size to prevent QuotaExceededError
+  // Kiểm tra dung lượng localStorage
   const checkStorageSize = () => {
     let total = 0;
     for (let x in localStorage) {
@@ -61,38 +84,28 @@ const Cudan = ({ onLogout }) => {
         total += (localStorage[x].length + x.length) * 2;
       }
     }
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-    return total < maxSize * 0.9; // Allow 90% of max size
+    const maxSize = 5 * 1024 * 1024;
+    return total < maxSize * 0.9;
   };
 
-  // Handle complaint form submission
+  // Xử lý gửi form khiếu nại
   const handleSubmitKhieuNai = (e) => {
     e.preventDefault();
-
-    // Validate inputs
     if (!hoTen.trim() || !noiDung.trim()) {
       setError("Vui lòng nhập đầy đủ họ tên và nội dung khiếu nại.");
       setSuccess("");
       return;
     }
-
-    // Check storage availability
     if (!checkStorageSize()) {
       setError("Dung lượng lưu trữ đầy. Vui lòng xóa bớt dữ liệu.");
       setSuccess("");
       return;
     }
-
-    // Get current complaints from localStorage
     const savedKhieuNai = localStorage.getItem("khieuNaiList");
     let khieuNaiList = savedKhieuNai ? JSON.parse(savedKhieuNai) : [];
-
-    // Limit complaint list to prevent storage issues
     if (khieuNaiList.length >= 100) {
-      khieuNaiList = khieuNaiList.slice(-99); // Keep last 99 complaints
+      khieuNaiList = khieuNaiList.slice(-99);
     }
-
-    // Generate new complaint
     const newKhieuNai = {
       id:
         khieuNaiList.length > 0
@@ -103,8 +116,6 @@ const Cudan = ({ onLogout }) => {
       ngayGui: new Date().toISOString().split("T")[0],
       trangThai: "Chưa xử lý",
     };
-
-    // Update localStorage
     khieuNaiList.push(newKhieuNai);
     try {
       localStorage.setItem("khieuNaiList", JSON.stringify(khieuNaiList));
@@ -118,14 +129,14 @@ const Cudan = ({ onLogout }) => {
     }
   };
 
-  // Handle logout
+  // Xử lý đăng xuất
   const handleLogout = () => {
     localStorage.removeItem("user");
     if (onLogout) onLogout();
     navigate("/login");
   };
 
-  // Handle modal open/close
+  // Xử lý mở/đóng modal
   const handleOpenModal = (e) => {
     e.preventDefault();
     setShowModal(true);
@@ -139,22 +150,34 @@ const Cudan = ({ onLogout }) => {
     setSuccess("");
   };
 
-  // Handle document selection
+  // Xử lý modal danh sách văn bản
+  const handleOpenVanBanModal = (e) => {
+    e.preventDefault();
+    setShowVanBanModal(true);
+  };
+
+  const handleCloseVanBanModal = () => {
+    setShowVanBanModal(false);
+    setSelectedVanBan(null);
+  };
+
+  // Xử lý chọn văn bản
   const handleSelectVanBan = (vanBan) => {
     setSelectedVanBan(vanBan);
   };
 
-  const handleCloseVanBan = () => {
-    setSelectedVanBan(null);
-  };
-
-  // Render file link for download
+  // Hiển thị liên kết tải file
   const renderFileLink = (doc) => {
-    if (!doc.file) return <i style={{ color: "gray" }}>Chưa có file</i>;
+    if (!doc.file) return <i style={{ color: "#6c757d" }}>Chưa có file</i>;
     const url = fileURLs[doc.id];
-    if (!url) return <i style={{ color: "gray" }}>Đang tải...</i>;
+    if (!url) return <i style={{ color: "#6c757d" }}>Đang tải...</i>;
     return (
-      <a href={url} download={doc.file.name} title="Tải xuống file văn bản">
+      <a
+        href={url}
+        download={doc.file.name}
+        className="text-primary text-decoration-underline"
+        title="Tải xuống file văn bản"
+      >
         📄 {doc.file.name}
       </a>
     );
@@ -170,10 +193,57 @@ const Cudan = ({ onLogout }) => {
         crossOrigin="anonymous"
       />
 
+      {/* CSS tùy chỉnh */}
+      <style>
+        {`
+          .navbar {
+            background: linear-gradient(to right, #0062cc, #6610f2);
+          }
+          .navbar-brand, .nav-link {
+            font-weight: 600;
+          }
+          .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+          }
+          .welcome-section {
+            background: linear-gradient(to bottom, #ffffff, #f8f9fa);
+            border-radius: 10px;
+            padding: 3rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+          }
+          .card {
+            transition: transform 0.2s, box-shadow 0.2s;
+          }
+          .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+          }
+          .quick-link-btn {
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+          }
+          .quick-link-btn:hover {
+            filter: brightness(90%);
+          }
+          .modal-header {
+            background: linear-gradient(to right, #0062cc, #6610f2);
+            color: white;
+          }
+          .footer {
+            background-color: #212529;
+            padding: 1.5rem;
+          }
+        `}
+      </style>
+
       {/* Header */}
-      <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow">
+      <nav className="navbar navbar-expand-lg navbar-dark shadow">
         <div className="container">
-          <a className="navbar-brand fw-bold" href="#">
+          <a className="navbar-brand" href="#">
             Cổng Cư Dân
           </a>
           <button
@@ -190,11 +260,19 @@ const Cudan = ({ onLogout }) => {
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav ms-auto">
               <li className="nav-item">
+                <a
+                  className="nav-link"
+                  href="#"
+                  onClick={handleOpenVanBanModal}
+                >
+                  Văn Bản
+                </a>
+              </li>
+              <li className="nav-item">
                 <a className="nav-link" href="#" onClick={handleOpenModal}>
                   Gửi Khiếu Nại
                 </a>
               </li>
-
               <li className="nav-item">
                 <button
                   onClick={handleLogout}
@@ -209,51 +287,153 @@ const Cudan = ({ onLogout }) => {
       </nav>
 
       {/* Welcome Section */}
-      <section className="container py-5 text-center">
-        <h2 className="display-6 fw-semibold mb-4">
-          Chào mừng bạn đến với trang dành cho cư dân!
+      <section className="container py-5 text-center welcome-section">
+        <h2 className="display-5 fw-bold mb-4">
+          Chào mừng đến với Cổng Cư Dân!
         </h2>
-        <p className="lead text-muted col-md-8 mx-auto">
-          Đây là nơi bạn có thể xem văn bản và gửi khiếu nại của bạn!
+        <p className="lead text-muted col-md-8 mx-auto mb-5">
+          Kết nối với ban quản lý, xem thông báo mới nhất, gửi khiếu nại, và
+          truy cập các văn bản quan trọng một cách dễ dàng.
         </p>
-      </section>
-
-      {/* Document List Section */}
-      <section className="container py-5">
-        <h3 className="fw-semibold mb-4 text-center">Danh Sách Văn Bản</h3>
-        <div className="card shadow-sm p-4 col-md-8 mx-auto">
-          {vanBanList.length === 0 ? (
-            <p className="text-center text-muted">Không có văn bản nào.</p>
-          ) : (
-            <table className="table table-hover">
-              <thead>
-                <tr>
-                  <th scope="col">STT</th>
-                  <th scope="col">Tiêu Đề</th>
-                  <th scope="col">Loại Văn Bản</th>
-                  <th scope="col">Ngày Ban Hành</th>
-                  <th scope="col">File</th>
-                </tr>
-              </thead>
-              <tbody>
-                {vanBanList.map((vanBan, index) => (
-                  <tr
-                    key={vanBan.id}
-                    onClick={() => handleSelectVanBan(vanBan)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td>{index + 1}</td>
-                    <td>{vanBan.title}</td>
-                    <td>{vanBan.type}</td>
-                    <td>{vanBan.issuedDate}</td>
-                    <td>{renderFileLink(vanBan)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+        <div className="d-flex justify-content-center gap-3">
+          <button
+            className="btn btn-primary px-5 py-2"
+            onClick={handleOpenVanBanModal}
+          >
+            Xem Văn Bản
+          </button>
+          <button
+            className="btn btn-outline-primary px-5 py-2"
+            onClick={handleOpenModal}
+          >
+            Gửi Khiếu Nại
+          </button>
         </div>
       </section>
+
+      {/* Announcements Section */}
+      <section className="container py-5">
+        <h3 className="text-center fw-bold mb-4">Thông Báo Nổi Bật</h3>
+        <div className="row row-cols-1 row-cols-md-3 g-4">
+          {announcements.map((announcement) => (
+            <div key={announcement.id} className="col">
+              <div className="card h-100">
+                <div className="card-body">
+                  <h5 className="card-title fw-bold">{announcement.title}</h5>
+                  <p className="card-text text-muted">
+                    <strong>Ngày:</strong> {announcement.date}
+                  </p>
+                  <p className="card-text">{announcement.content}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Quick Links Section */}
+      <section className="container py-5">
+        <h3 className="text-center fw-bold mb-4">Liên Kết Nhanh</h3>
+        <div className="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3">
+          <div className="col">
+            <button
+              className="btn btn-primary quick-link-btn w-100"
+              style={{ backgroundColor: "#007bff" }}
+              onClick={handleOpenVanBanModal}
+            >
+              📜 Xem Văn Bản
+            </button>
+          </div>
+          <div className="col">
+            <button
+              className="btn btn-success quick-link-btn w-100"
+              style={{ backgroundColor: "#28a745" }}
+              onClick={handleOpenModal}
+            >
+              📩 Gửi Khiếu Nại
+            </button>
+          </div>
+          <div className="col">
+            <button
+              className="btn btn-warning quick-link-btn w-100"
+              style={{ backgroundColor: "#ffc107" }}
+              onClick={() => alert("Tính năng đang phát triển!")}
+            >
+              🔔 Xem Thông Báo
+            </button>
+          </div>
+          <div className="col">
+            <button
+              className="btn btn-info quick-link-btn w-100"
+              style={{ backgroundColor: "#17a2b8" }}
+              onClick={() => alert("Tính năng đang phát triển!")}
+            >
+              📅 Lịch Sự Kiện
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Document List Modal */}
+      <div
+        className={`modal fade ${showVanBanModal ? "show" : ""}`}
+        style={{ display: showVanBanModal ? "block" : "none" }}
+        tabIndex="-1"
+        aria-labelledby="vanBanListModalLabel"
+        aria-hidden={!showVanBanModal}
+      >
+        <div className="modal-dialog modal-dialog-centered modal-lg">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="vanBanListModalLabel">
+                Danh Sách Văn Bản
+              </h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={handleCloseVanBanModal}
+                aria-label="Close"
+              ></button>
+            </div>
+            <div className="modal-body">
+              {vanBanList.length === 0 ? (
+                <p className="text-center text-muted">Không có văn bản nào.</p>
+              ) : (
+                <table className="table table-hover">
+                  <thead>
+                    <tr>
+                      <th scope="col">Tiêu Đề</th>
+                      <th scope="col">Ngày Ban Hành</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vanBanList.map((vanBan) => (
+                      <tr
+                        key={vanBan.id}
+                        onClick={() => handleSelectVanBan(vanBan)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <td>{vanBan.title}</td>
+                        <td>{vanBan.issuedDate}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleCloseVanBanModal}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {showVanBanModal && <div className="modal-backdrop fade show"></div>}
 
       {/* Document Detail Modal */}
       {selectedVanBan && (
@@ -273,31 +453,26 @@ const Cudan = ({ onLogout }) => {
                 <button
                   type="button"
                   className="btn-close"
-                  onClick={handleCloseVanBan}
+                  onClick={() => setSelectedVanBan(null)}
                   aria-label="Close"
                 ></button>
               </div>
               <div className="modal-body">
-                <p>
+                <p className="mb-3">
                   <strong>Loại Văn Bản:</strong> {selectedVanBan.type}
                 </p>
-                <p>
+                <p className="mb-3">
                   <strong>Ngày Ban Hành:</strong> {selectedVanBan.issuedDate}
                 </p>
-                <p>
-                  <strong>File:</strong>{" "}
-                  {selectedVanBan.file ? (
-                    renderFileLink(selectedVanBan)
-                  ) : (
-                    <i style={{ color: "gray" }}>Chưa có file</i>
-                  )}
+                <p className="mb-3">
+                  <strong>File:</strong> {renderFileLink(selectedVanBan)}
                 </p>
               </div>
               <div className="modal-footer">
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={handleCloseVanBan}
+                  onClick={() => setSelectedVanBan(null)}
                 >
                   Đóng
                 </button>
@@ -340,7 +515,7 @@ const Cudan = ({ onLogout }) => {
                   {success}
                 </div>
               )}
-              <div className="mb-3">
+              <div className="mb-4">
                 <label htmlFor="hoTen" className="form-label fw-bold">
                   Họ Tên
                 </label>
@@ -353,14 +528,14 @@ const Cudan = ({ onLogout }) => {
                   placeholder="Nhập họ tên của bạn"
                 />
               </div>
-              <div className="mb-3">
+              <div className="mb-4">
                 <label htmlFor="noiDung" className="form-label fw-bold">
                   Nội Dung Khiếu Nại
                 </label>
                 <textarea
                   className="form-control"
                   id="noiDung"
-                  rows="4"
+                  rows="5"
                   value={noiDung}
                   onChange={(e) => setNoiDung(e.target.value)}
                   placeholder="Mô tả vấn đề bạn gặp phải"
@@ -389,7 +564,7 @@ const Cudan = ({ onLogout }) => {
       {showModal && <div className="modal-backdrop fade show"></div>}
 
       {/* Footer */}
-      <footer className="bg-dark text-white text-center py-3">
+      <footer className="text-white text-center py-3 footer">
         <p className="mb-0">© 2025 Cổng Cư Dân. All rights reserved.</p>
       </footer>
 

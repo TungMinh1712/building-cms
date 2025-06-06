@@ -37,7 +37,7 @@ const Login = ({ onLoginSuccess }) => {
         className="card shadow-lg p-4"
         style={{ maxWidth: "400px", width: "100%" }}
       >
-        <h3 className="text-center text-primary mb-4">Đăng nhập hệ thống</h3>
+        <h3 className="text-center text-primary mb-4">Đăng nhập</h3>
 
         <div className="mb-3">
           <label className="form-label">Tên đăng nhập</label>

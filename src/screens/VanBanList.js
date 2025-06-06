@@ -3,79 +3,31 @@ import React, { useState, useEffect } from "react";
 const initialDocuments = [
   {
     id: 1,
-    title: "Quyết định bổ nhiệm trưởng phòng",
-    type: "Quyết định",
-    issuedDate: "2024-01-15",
-    file: null,
-  },
-  {
-    id: 2,
-    title: "Thông báo họp giao ban tháng 3",
-    type: "Thông báo",
-    issuedDate: "2024-03-01",
-    file: null,
-  },
-  {
-    id: 3,
-    title: "Kế hoạch đào tạo nội bộ quý 2",
-    type: "Kế hoạch",
-    issuedDate: "2024-04-10",
-    file: null,
-  },
-  {
-    id: 4,
-    title: "Báo cáo tài chính năm 2023",
-    type: "Báo cáo",
-    issuedDate: "2024-02-28",
-    file: null,
-  },
-  {
-    id: 5,
-    title: "Hướng dẫn sử dụng phần mềm HRM",
-    type: "Hướng dẫn",
-    issuedDate: "2024-01-05",
-    file: null,
-  },
-  {
-    id: 6,
     title: "Thông báo nghỉ lễ 30/4 - 1/5",
     type: "Thông báo",
     issuedDate: "2024-04-20",
     file: null,
   },
+
   {
-    id: 7,
-    title: "Quyết định khen thưởng quý I",
-    type: "Quyết định",
-    issuedDate: "2024-04-01",
-    file: null,
-  },
-  {
-    id: 8,
-    title: "Kế hoạch tổ chức đào tạo kỹ năng mềm",
-    type: "Kế hoạch",
-    issuedDate: "2024-03-15",
-    file: null,
-  },
-  {
-    id: 9,
-    title: "Báo cáo tổng kết hoạt động quý I",
-    type: "Báo cáo",
-    issuedDate: "2024-04-05",
-    file: null,
-  },
-  {
-    id: 10,
-    title: "Thông báo tuyển dụng tháng 5",
-    type: "Thông báo",
+    id: 2,
+    title: "Nội quy chung cư",
+    type: "Quy định",
     issuedDate: "2024-05-01",
     file: null,
   },
   {
-    id: 11,
-    title: "Quyết định điều chuyển cán bộ",
-    type: "Quyết định",
+    id: 3,
+    title: "Kế hoạch bảo trì, bảo dưỡng định kỳ",
+    type: "Kế hoạch",
     issuedDate: "2024-05-10",
+    file: null,
+  },
+  {
+    id: 4,
+    title: "Thông báo sự kiện cộng đồng",
+    type: "Thông báo",
+    issuedDate: "2024-05-15",
     file: null,
   },
 ];
@@ -102,7 +54,7 @@ const VanBanList = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [fileURLs, setFileURLs] = useState({}); // id -> objectURL
-  const itemsPerPage = 5;
+  const itemsPerPage = 3;
 
   // Tạo và dọn dẹp URL object cho file để hiển thị link download
   useEffect(() => {
@@ -276,7 +228,7 @@ const VanBanList = () => {
   const renderFileLink = (doc) => {
     if (!doc.file) return <i style={{ color: "gray" }}>Chưa có file</i>;
     const url = fileURLs[doc.id];
-    if (!url) return <i style={{ color: "gray" }}>Đang tải...</i>;
+    if (!url) return <i style={{ color: "gray" }}>Chưa có file</i>;
     return (
       <a href={url} download={doc.file.name} title="Tải xuống file văn bản">
         📄 {doc.file.name}

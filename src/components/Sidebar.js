@@ -22,9 +22,9 @@ const Sidebar = ({ onLogout }) => {
 
   const menuItems = [
     { to: "/bqt", label: "Ban Quản Trị", icon: "👥" },
-    { to: "/vanban", label: "Văn Bản", icon: "📄" },
     { to: "/nhiemvu", label: "Nhiệm Vụ", icon: "📋" },
     { to: "/cuochop", label: "Cuộc Họp", icon: "☎️" },
+    { to: "/vanban", label: "Văn Bản", icon: "📄" },
     { to: "/khieunai", label: "Khiếu Nại", icon: "🤬" },
   ];
 

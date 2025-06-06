@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { initialData } from "./BanQuanTriList"; // Import initialData làm fallback
 
 const initialTasks = [
   {
@@ -73,21 +74,17 @@ const initialTasks = [
   },
 ];
 
-const assignees = [
-  "Nguyễn Văn An",
-  "Trần Thị Bình",
-  "Lê Văn Cường",
-  "Phạm Thị Dung",
-  "Hoàng Thị Hạnh",
-  "Vũ Văn Khoa",
-  "Ngô Thị Lan",
-  "Bùi Quang Minh",
-  "Tạ Thị Ngọc",
-];
-
 const STORAGE_KEY = "tasks_nhiemvu";
+const BAN_QUAN_TRI_STORAGE_KEY = "banQuanTriData";
 
 const NhiemVu = () => {
+  // State để lưu danh sách người phụ trách
+  const [assignees, setAssignees] = useState(() => {
+    const stored = localStorage.getItem(BAN_QUAN_TRI_STORAGE_KEY);
+    const data = stored ? JSON.parse(stored) : initialData;
+    return data.map((item) => item.name);
+  });
+
   // Lấy data từ localStorage nếu có, không thì dùng initialTasks
   const [tasks, setTasks] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -97,7 +94,7 @@ const NhiemVu = () => {
   const [form, setForm] = useState({
     title: "",
     status: "Chưa hoàn thành",
-    assignee: assignees[0],
+    assignee: assignees[0] || "", // Giá trị mặc định là tên đầu tiên trong danh sách
     deadline: "",
   });
   const [editingId, setEditingId] = useState(null);
@@ -105,7 +102,35 @@ const NhiemVu = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // Hàm cập nhật task và đồng bộ localStorage luôn
+  // Đồng bộ danh sách assignees khi localStorage thay đổi
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const stored = localStorage.getItem(BAN_QUAN_TRI_STORAGE_KEY);
+      const data = stored ? JSON.parse(stored) : initialData;
+      const newAssignees = data.map((item) => item.name);
+      setAssignees(newAssignees);
+
+      // Cập nhật form.assignee nếu giá trị hiện tại không còn trong danh sách
+      if (!newAssignees.includes(form.assignee)) {
+        setForm((prev) => ({
+          ...prev,
+          assignee: newAssignees[0] || "",
+        }));
+      }
+    };
+
+    // Lắng nghe sự kiện thay đổi localStorage
+    window.addEventListener("storage", handleStorageChange);
+
+    // Kiểm tra localStorage ban đầu
+    handleStorageChange();
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [form.assignee]);
+
+  // Hàm cập nhật task và đồng bộ localStorage
   const updateTasks = (newTasks) => {
     setTasks(newTasks);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newTasks));
@@ -120,6 +145,10 @@ const NhiemVu = () => {
       alert("Cần chọn người phụ trách!");
       return;
     }
+    if (!assignees.includes(form.assignee)) {
+      alert("Người phụ trách không hợp lệ!");
+      return;
+    }
     if (!form.deadline) {
       alert("Cần chọn hạn chót cho nhiệm vụ!");
       return;
@@ -128,11 +157,11 @@ const NhiemVu = () => {
       tasks.length > 0 ? Math.max(...tasks.map((t) => t.id)) + 1 : 1;
     const newTasks = [...tasks, { id: newId, ...form }];
     updateTasks(newTasks);
-    setCurrentPage(Math.ceil(newTasks.length / itemsPerPage)); // Chuyển tới trang cuối
+    setCurrentPage(Math.ceil(newTasks.length / itemsPerPage));
     setForm({
       title: "",
       status: "Chưa hoàn thành",
-      assignee: assignees[0],
+      assignee: assignees[0] || "",
       deadline: "",
     });
   };
@@ -156,6 +185,10 @@ const NhiemVu = () => {
       alert("Cần chọn người phụ trách!");
       return;
     }
+    if (!assignees.includes(form.assignee)) {
+      alert("Người phụ trách không hợp lệ!");
+      return;
+    }
     if (!form.deadline) {
       alert("Cần chọn hạn chót cho nhiệm vụ!");
       return;
@@ -168,7 +201,7 @@ const NhiemVu = () => {
     setForm({
       title: "",
       status: "Chưa hoàn thành",
-      assignee: assignees[0],
+      assignee: assignees[0] || "",
       deadline: "",
     });
   };
@@ -178,7 +211,7 @@ const NhiemVu = () => {
     setForm({
       title: "",
       status: "Chưa hoàn thành",
-      assignee: assignees[0],
+      assignee: assignees[0] || "",
       deadline: "",
     });
   };
@@ -187,7 +220,6 @@ const NhiemVu = () => {
     if (window.confirm("Bạn có chắc muốn xóa nhiệm vụ này?")) {
       const newTasks = tasks.filter((t) => t.id !== id);
       updateTasks(newTasks);
-      // Điều chỉnh trang hiện tại nếu cần
       const maxPage = Math.ceil(newTasks.length / itemsPerPage);
       setCurrentPage((prev) => Math.min(prev, maxPage || 1));
     }
@@ -197,7 +229,6 @@ const NhiemVu = () => {
     t.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Phân trang
   const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedTasks = filteredTasks.slice(
@@ -269,7 +300,13 @@ const NhiemVu = () => {
                 )}
               </td>
 
-              <td>
+              <td
+                style={{
+                  color: task.status === "Đã hoàn thành" ? "green" : "black",
+                  fontWeight:
+                    task.status === "Đã hoàn thành" ? "bold" : "normal",
+                }}
+              >
                 {editingId === task.id ? (
                   <select
                     value={form.status}
@@ -288,11 +325,16 @@ const NhiemVu = () => {
               <td>
                 {editingId === task.id ? (
                   <select
-                    value={form.assignee}
+                    value={
+                      assignees.includes(form.assignee) ? form.assignee : ""
+                    }
                     onChange={(e) =>
                       setForm({ ...form, assignee: e.target.value })
                     }
                   >
+                    <option value="" disabled>
+                      Chọn người phụ trách
+                    </option>
                     {assignees.map((name) => (
                       <option key={name} value={name}>
                         {name}
@@ -300,7 +342,7 @@ const NhiemVu = () => {
                     ))}
                   </select>
                 ) : (
-                  task.assignee
+                  task.assignee || ""
                 )}
               </td>
 
@@ -352,7 +394,6 @@ const NhiemVu = () => {
         </tbody>
       </table>
 
-      {/* Điều khiển phân trang */}
       <div style={{ marginBottom: 20, textAlign: "center" }}>
         <button
           onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
@@ -371,7 +412,6 @@ const NhiemVu = () => {
         </button>
       </div>
 
-      {/* Form thêm mới */}
       <h3>Thêm nhiệm vụ mới</h3>
       <div
         style={{ display: "flex", gap: 10, marginBottom: 40, flexWrap: "wrap" }}
@@ -394,6 +434,9 @@ const NhiemVu = () => {
           value={form.assignee}
           onChange={(e) => setForm({ ...form, assignee: e.target.value })}
         >
+          <option value="" disabled>
+            Chọn người phụ trách
+          </option>
           {assignees.map((name) => (
             <option key={name} value={name}>
               {name}
@@ -409,6 +452,7 @@ const NhiemVu = () => {
           <button
             onClick={handleAdd}
             style={{ backgroundColor: "#4CAF50", color: "white" }}
+            disabled={assignees.length === 0}
           >
             ➕ Thêm
           </button>
